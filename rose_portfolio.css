@@ -32,7 +32,8 @@ body{font-family:var(--font);background:var(--cream);color:var(--ink);min-height
 .top-bar{position:fixed;top:0;width:100%;z-index:300;background:rgba(253,248,242,.96);border-bottom:4px solid transparent;border-image:linear-gradient(90deg,var(--blush),var(--teal),var(--red),var(--sage),var(--mauve),var(--peach)) 1;transition:background .3s;}
 .dark .top-bar{background:rgba(26,21,16,.97);}
 .tbi{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:1.2rem;padding:.65rem 2rem;}
-.tb-logo{font-size:1.3rem;font-weight:700;color:var(--red);letter-spacing:-.02em;white-space:nowrap;flex-shrink:0;}
+.tb-logo{font-size:1.3rem;font-weight:700;color:var(--red);letter-spacing:-.02em;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:.45rem;}
+.tb-logo img{max-height:36px;max-width:140px;object-fit:contain;display:block;}
 .tb-logo span{color:var(--teal);}
 .tb-nav{display:flex;gap:.1rem;align-items:center;flex:1;overflow-x:auto;scrollbar-width:none;}
 .tb-nav::-webkit-scrollbar{display:none;}
