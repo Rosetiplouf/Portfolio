@@ -764,6 +764,27 @@ function toggleTLDetails(id){const details=document.getElementById(`tl-popup-det
 function closeTLPopup(){document.getElementById('tl-popup').classList.remove('show');}
 document.getElementById('tl-popup').addEventListener('click',e=>{if(e.target===e.currentTarget)closeTLPopup();});
 
+// Resolve deferred images marked with `data-img-key` or elements with `data-bg-key`.
+async function resolveDeferredImages(root=document){
+  if(!root) root = document;
+  try{
+    const imgs = Array.from(root.querySelectorAll('img[data-img-key], img.deferred, img.deferred-icon'));
+    await Promise.all(imgs.map(async (el)=>{
+      const key = el.dataset.imgKey || el.getAttribute('data-img-key');
+      if(!key) return;
+      try{ const url = await window.getImageUrl(key); if(url){ el.src = url; el.removeAttribute('data-img-key'); el.classList.remove('deferred'); } }
+      catch(_){ }
+    }));
+    const bgEls = Array.from(root.querySelectorAll('[data-bg-key]'));
+    await Promise.all(bgEls.map(async el=>{
+      const key = el.dataset.bgKey;
+      if(!key) return;
+      try{ const url = await window.getImageUrl(key); if(url){ el.innerHTML = `<img class="cover" src="${url}">`; el.removeAttribute('data-bg-key'); } }
+      catch(_){ }
+    }));
+  }catch(_){ }
+}
+
 function showSkillProjects(skillId){
   const s=(S.skills||[]).find(x=>x.id===skillId);if(!s)return;
   currentSkillPopupId=skillId;
@@ -774,6 +795,7 @@ function showSkillProjects(skillId){
   const combined=`<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem"><div style="width:42px;height:42px;border-radius:10px;background:${s.color};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff">${s.name[0]||'S'}</div><div style="font-size:1.05rem;font-weight:700">${s.name}</div></div><div style="margin-bottom:.6rem"><strong>${lang==='fr'?'Projets liés':'Related projects'}</strong><div style="margin-top:.5rem">${projHtml}</div></div><div><strong>${lang==='fr'?'Parcours liés':'Related timeline'}</strong><div style="margin-top:.5rem">${tlHtml}</div></div>`;
   document.getElementById('skill-popup-content').innerHTML=combined;
   document.getElementById('skill-popup').classList.add('show');
+  resolveDeferredImages(document.getElementById('skill-popup-content'));
 }
 function closeSkillPopup(){document.getElementById('skill-popup').classList.remove('show');currentSkillPopupId=null;}
 document.getElementById('skill-popup').addEventListener('click',e=>{if(e.target===e.currentTarget)closeSkillPopup();});
@@ -960,8 +982,10 @@ function renderTimeline(){
     const logo=imgCache['tl_logo_'+t.id];
     const offset=offsets[t.id]||0;
     const top=ly+offset-23;
-    return`<div class="tl-card tl-node${isSkillFilter(activeF)&&((t.linkedSkills||[]).includes(activeF))?' active':''}" style="left:${x}px;top:${top}px;transform:translateX(-50%);border:2px solid ${col};" onclick="openTLPopup('${t.id}')" title="${tv(t,'title')}">${logo?`<img class="tl-card-logo" src="${logo}" alt="">`:`<div class="tl-card-logo-ph">✦</div>`}</div>`;
+    return`<div class="tl-card tl-node${isSkillFilter(activeF)&&((t.linkedSkills||[]).includes(activeF))?' active':''}" style="left:${x}px;top:${top}px;transform:translateX(-50%);border:2px solid ${col};" onclick="openTLPopup('${t.id}')" title="${tv(t,'title')}">${logo?`<img class="tl-card-logo" src="${logo}" alt="">`:`<img class="tl-card-logo deferred" data-img-key="tl_logo_${t.id}">`}</div>`;
   }).join('');
+  // resolve any deferred timeline logos
+  resolveDeferredImages(document.getElementById('tl-cards'));
   document.getElementById('tl-container').style.height=TH+'px';
 }
 
@@ -987,6 +1011,8 @@ function renderTestimonials(){
   }).join('');
   el.innerHTML = `<div class="testimonials-masonry">${cards}</div>`;
   if(typeof obs==='function') setTimeout(()=>obs(),60);
+  // resolve any deferred avatars
+  resolveDeferredImages(el);
 }
 
 let activeF='all';
@@ -1006,7 +1032,7 @@ function renderProjects(){
     const img=imgCache['proj_'+p.id],icon=p.iconKey?imgCache[p.iconKey]:null,hasPDF=p.pdfKey&&imgCache[p.pdfKey];
     const esc=s=>(s||'').replace(/'/g,"\\'");
     return`<div class="card proj-card ap">
-      <div class="proj-thumb" style="background:${p.color}">${img?`<img class="cover" src="${img}">`:''}${(icon||!img)?`<span class="pe">${icon?`<img src="${icon}" style="width:2.5rem;height:2.5rem;object-fit:contain">`:(p.emoji||'')}</span>`:''}</div>
+      <div class="proj-thumb" style="background:${p.color}" ${!img?`data-bg-key="proj_${p.id}"`:''}>${img?`<img class="cover" src="${img}">`:''}${(icon||!img)?`<span class="pe">${icon?`<img class="deferred-icon" data-img-key="${p.iconKey}" src="${icon || ''}" style="width:2.5rem;height:2.5rem;object-fit:contain">`:(p.emoji||'')}</span>`:''}</div>
       <div class="proj-body"><div class="proj-cat">${p.cat}${p.location?` · ${p.location}`:''}</div><div class="proj-name">${tv(p,'title')}</div><div class="proj-desc">${tv(p,'desc')}</div>
       ${(p.tags||[]).length?`<div class="proj-tags">${p.tags.map(id=>tagMap[id]?`<span class="proj-tag">${tagMap[id].emoji} ${tagMap[id].name}</span>`:'').join('')}</div>`:''}
       <div class="proj-actions">
@@ -1016,6 +1042,8 @@ function renderProjects(){
       </div></div></div>`;
   }).join('');
   obs();
+  // Resolve deferred images inside projects
+  resolveDeferredImages(document.getElementById('proj-el'));
 }
 function setF(c){activeF=c;renderProjects();renderTimeline();renderSkills();}
 function setSkillFilter(id){
@@ -1028,9 +1056,10 @@ function renderContact(){
   const items=(S.contact||[]).map(c=>{
     const icon=c.iconKey?imgCache[c.iconKey]:null;
     const value=c.href?`<a href="${c.href}">${c.value}</a>`:`<span class="ci-value">${c.value}</span>`;
-    return `<div class="ci"><div class="ci-icon">${icon?`<img src="${icon}" alt="">`:(c.emoji||'✦')}</div><div class="ci-meta"><span class="ci-lbl">${tv(c,'label')}</span>${value}</div></div>`;
+    return `<div class="ci"><div class="ci-icon">${icon?`<img src="${icon}" alt="">`:(c.iconKey?`<img class="deferred" data-img-key="${c.iconKey}">`:(c.emoji||'✦'))}</div><div class="ci-meta"><span class="ci-lbl">${tv(c,'label')}</span>${value}</div></div>`;
   }).join('');
   setHTML('ct-el',`<div class="contact-grid">${items}</div>`);
+  resolveDeferredImages(document.getElementById('ct-el'));
 }
 function obs(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.ap:not(.vis)').forEach(el=>io.observe(el));}
 
