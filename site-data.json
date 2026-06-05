@@ -39,7 +39,12 @@
     "en": {
       "p1": "I am Rose, a multidisciplinary creator and socio-cultural facilitator from Bordeaux.",
       "p2": "Driven by a strong commitment to community and activism, I always demonstrate creative autonomy."
-    }
+    },
+    ,
+    "avatarKey": "about_avatar",
+    "avatarUrl": "/images/rosie.png"
+    "avatarKey": "lib_rosie.png",
+    "avatarUrl": "http://localhost:8000/images/rosie.png"
   },
   "tags": [
     {
@@ -850,5 +855,5 @@
     }
   },
   "cv": "lib_CV.pdf",
-  "visits": 2
+  "visits": 4
 }
