@@ -102,6 +102,54 @@ const SEC_LABELS={
 
 let S={}, imgCache={};
 
+// Centralized, safe image resolver to avoid aggressive extension probing and repeated HEAD storms.
+// Exposed as `window.getImageUrl(key)` so any existing runtime callers (older bundles) use this implementation.
+window.getImageUrl = async function(key){
+  if(!key) return null;
+  if(imgCache[key]) return imgCache[key];
+  // simple in-memory resolved cache to avoid repeated probes
+  window.__rp_resolved = window.__rp_resolved || Object.create(null);
+  const resolved = window.__rp_resolved;
+  if(resolved.hasOwnProperty(key)) return resolved[key] || null;
+  try{
+    // check IndexedDB first
+    const idb = await IDB.get(key);
+    if(idb){ imgCache[key]=idb; resolved[key]=idb; return idb; }
+  }catch(_){ }
+  // check image library entries (if any)
+  try{
+    if(S.imageLibrary && Array.isArray(S.imageLibrary)){
+      const lib = S.imageLibrary.find(it=>it.key===key || (it.filename && it.filename===key) || (it.url && it.url.split('/').pop()===key));
+      if(lib && lib.url){ imgCache[key]=lib.url; try{ IDB.set(key,lib.url); }catch(_){ } resolved[key]=lib.url; return lib.url; }
+    }
+  }catch(_){ }
+
+  // If key appears to be a filename with extension, try a single relative check and one raw.githubusercontent attempt (no multi-extension loops)
+  try{
+    if(/\.[a-zA-Z0-9]{2,4}$/.test(key)){
+      const filename = key;
+      let rel;
+      try{ rel = new URL('./images/'+filename, window.location.href).href; }catch(_){ rel = 'images/'+filename; }
+      try{ const r = await fetch(rel,{method:'HEAD'}); if(r.ok){ imgCache[key]=rel; try{ IDB.set(key,rel); }catch(_){ } resolved[key]=rel; return rel; } }catch(_){ }
+      // try raw.githubusercontent for github pages (main/master)
+      try{
+        const host = (location.hostname||'');
+        if(host.endsWith('github.io')){
+          const user = host.split('.')[0] || '';
+          const parts = (location.pathname||'').split('/').filter(Boolean);
+          const repo = parts[0] || '';
+          for(const br of ['main','master']){
+            const raw = `https://raw.githubusercontent.com/${user}/${repo}/${br}/images/${filename}`;
+            try{ const r = await fetch(raw,{method:'HEAD'}); if(r.ok){ imgCache[key]=raw; try{ IDB.set(key,raw); }catch(_){ } resolved[key]=raw; return raw; } }catch(_){ }
+          }
+        }
+      }catch(_){ }
+    }
+  }catch(_){ }
+  resolved[key]=null;
+  return null;
+};
+
 async function loadImageLibrary(){
   const candidates = ['./images/image-library.json','/images/image-library.json','images/image-library.json','./image-library.json','/image-library.json'];
   let list = null;
@@ -279,7 +327,7 @@ async function initState(){
   (S.testimonials||[]).slice(0,4).forEach(t=>criticalKeys.add('testi_'+t.id));
   (async ()=>{
     try{
-      await Promise.all([...criticalKeys].map(k=>IDB.get(k).then(v=>{ if(v) imgCache[k]=v; })));
+      await Promise.all([...criticalKeys].map(k=>window.getImageUrl(k).then(v=>{ if(v) imgCache[k]=v; })));
       requestAnimationFrame(()=>{renderHeaderLogo();renderLoaderMain();renderAbout();renderCarouselBg();renderCarouselSection();renderProjects();renderTimeline();renderTestimonials();renderContact();});
     }catch(e){}
   })();
