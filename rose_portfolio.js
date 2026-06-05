@@ -1170,7 +1170,7 @@ function renderAdminImageLibrary(){
 }
 
 function useLibAsHeader(libKey){ S.header ||= {}; S.header.logoKey = libKey; LS.set('header',S.header); renderHeaderLogo(); renderSectionSettings(); flash('Logo défini depuis la bibliothèque ✓'); }
-function useLibAsAbout(libKey){ const d=imgCache[libKey]; if(!d){flash('Image introuvable');return;} imgCache['about_avatar']=d; IDB.set('about_avatar',d); renderAbout(); refreshAboutPrev(); flash('Photo de profil définie ✓'); }
+function useLibAsAbout(libKey){ const d=imgCache[libKey]; if(!d){flash('Image introuvable');return;} imgCache['about_avatar']=d; IDB.set('about_avatar',d); S.about ||= {}; S.about.avatarKey = libKey; S.about.avatarUrl = d; LS.set('about', S.about); renderAbout(); refreshAboutPrev(); renderSectionSettings(); flash('Photo de profil définie ✓'); }
 function addLibToCarousel(libKey){ S.carousel ||= {}; S.carousel.imageKeys = S.carousel.imageKeys||[]; S.carousel.imageKeys.push(libKey); LS.set('carousel',S.carousel); renderAdminCarousel(); renderCarouselSection(); renderCarouselBg(); flash('Image ajoutée à la galerie ✓'); }
 
 // Library picker state and helpers
@@ -1236,7 +1236,7 @@ function assignLibToTarget(libKey,targetType,params){
     case 'header_logo':{
       S.header ||= {}; S.header.logoKey = libKey; S.header.logoUrl = url; imgCache[libKey] = url; IDB.set(libKey,url); LS.set('header',S.header); renderHeaderLogo(); renderSectionSettings(); flash('Logo du header défini ✓'); break; }
     case 'about_avatar':{
-      imgCache['about_avatar']=url; IDB.set('about_avatar',url); renderAbout(); refreshAboutPrev(); flash('Photo de profil définie ✓'); break; }
+      imgCache['about_avatar']=url; IDB.set('about_avatar',url); S.about ||= {}; S.about.avatarKey = libKey; S.about.avatarUrl = url; LS.set('about', S.about); renderAbout(); refreshAboutPrev(); renderSectionSettings(); flash('Photo de profil définie ✓'); break; }
     case 'testi_img':{
       const id = params.testiId; const k='testi_'+id; imgCache[k]=url; IDB.set(k,url); renderAdminTestimonials(); flash('Photo ajoutée ✓'); break; }
     case 'carousel_multi':{
