@@ -16,7 +16,7 @@
     "name": "Rose Pagotto",
     "disc": "Photographe · Vidéaste · Animatrice · Organisatrice · Militante",
     "tagline": "Full aura en vrai",
-    "tw": "Photographe,Vidéaste,Animatrice Socioculturelle,Organisatrice,Militante, Monteuse, Passionnée d'Excel",
+    "tw": "Animatrice Socioculturelle,Vidéaste,Organisatrice,Militante, Monteuse,Photographe,Passionnée d'Excel",
     "cta": "Découvrir mon travail",
     "en": {
       "disc": "Photographer · Videographer · Animator · Organizer · Activist",
@@ -81,16 +81,6 @@
       "id": "t9",
       "emoji": "📊",
       "name": "Excel"
-    },
-    {
-      "id": "t1779222945996",
-      "emoji": "⚡",
-      "name": "Maths & Sciences"
-    },
-    {
-      "id": "t1779222963864",
-      "emoji": "⭐",
-      "name": "Ingénierie & Codage"
     }
   ],
   "skills": [
@@ -144,7 +134,55 @@
       "lib_zoe.png",
       "lib_frip3.png"
     ],
-    "imageMeta": {}
+    "imageMeta": {
+      "lib_audiovisuel2.png": {
+        "linkedProjects": [
+          "p1780611925750"
+        ],
+        "title": "Rencontre avec les résident·es de l'EHPAD Léon Dubedat (Biscarosse)",
+        "tags": [
+          "t4",
+          "t2"
+        ]
+      },
+      "lib_plage.png": {
+        "linkedProjects": [
+          "p1779271772503"
+        ],
+        "tags": [
+          "t1"
+        ]
+      },
+      "lib_louise.png": {
+        "tags": [
+          "t1"
+        ],
+        "linkedProjects": [
+          "p1779271772503"
+        ]
+      },
+      "lib_noel4.png": {
+        "tags": [
+          "t4",
+          "t5"
+        ],
+        "title": "Village de Noël 2025  de l'IUT Bordeaux Montaigne",
+        "desc": "Village de Noël associatif de l'IUT Bordeaux Montaigne organisé par notre association EKITA en partenariat avec différentes associations étudiantes de l'établissement."
+      },
+      "lib_zoe.png": {
+        "tags": [
+          "t1"
+        ]
+      },
+      "lib_frip3.png": {
+        "tags": [
+          "t5",
+          "t4"
+        ],
+        "title": "Pause Ekitable x Friperie JACM",
+        "desc": "Pause Ekitable, moment de partage et de convivialité autour d'une boisson chaude et de produits locaux, en collaboration avec JACM qui organisait une friperie solidaire pour les étudiant·es de l'IUT Bordeaux Montaigne."
+      }
+    }
   },
   "projects": [
     {
@@ -537,9 +575,9 @@
       "year": 2026,
       "month": 0,
       "startYear": 2026,
-      "startMonth": 5,
-      "endYear": 0,
-      "endMonth": 0,
+      "startMonth": 4,
+      "endYear": 2026,
+      "endMonth": 6,
       "title": "Bénévole Médiation et Sécurité (Pride & Afterpride de Bordeaux)",
       "desc": "Médiation et surveillance sur la 30ème marche des fiertés de Bordeaux ainsi que sur l'afterpride aux Quais des sports. Mon rôle était d'assurer la sécurité, le bien-être et de prévenir et résoudre les situations complexes avec les différents publics. Ces événements ont rassemblé 10.000 à 15.000 personnes sur l'ensemble de la journée.",
       "location": "Bordeaux",
@@ -582,7 +620,7 @@
     {
       "id": "c1",
       "emoji": "📧",
-      "iconKey": "cticon_c1",
+      "iconKey": "",
       "label": "Email",
       "value": "rosepagottopro@gmail.com",
       "href": "mailto:rosepagottopro@gmail.com",
@@ -593,7 +631,7 @@
     {
       "id": "c2",
       "emoji": "📍",
-      "iconKey": "cticon_c2",
+      "iconKey": "",
       "label": "Localisation",
       "value": "Bordeaux, France",
       "href": "",
@@ -604,7 +642,7 @@
     {
       "id": "c3",
       "emoji": "📸",
-      "iconKey": "cticon_c3",
+      "iconKey": "",
       "label": "Instagram",
       "value": "@rosetiplouf",
       "href": "https://instagram.com/rosetiplouf",
@@ -620,7 +658,9 @@
         "id": "iut1",
         "title": "Construction de dynamiques partenariales",
         "text": "Membre du bureau de l’association EKITA au rôle de Chargée de Communication, j’ai été responsable des échanges et de la communication avec les différentes parties-prenantes de nos projets.\n\nDifférentes autres associations étudiantes font parti de notre établissement parmi lesquelles la plupart de leurs membres sont des camarades et/ou de promotion inférieure, supérieure ou égale.\n\nPour la réalisation de nos projets, notre influence se limite à l’IUT Bordeaux Montaigne, ses étudiant•es, professeur•es et entourage. Généralement, chaque association a son domaine d’action et ce qu’elle a pour conviction de promouvoir et réalise donc ses projets individuellement.\n\nToutefois, il nous est arrivé de solliciter la participation d’autres associations dans le cadre de projets en partenariat avec celles-ci de façon occasionnelle.\n\nNous avons, par exemple, réalisé en Novembre 2025 un partenariat avec l’association JACM, centrée sur l’art et la culture, dans le cadre d’un projet de Friperie solidaire.\n\nCet évènement, en lien avec les valeurs de notre association, nous tenait particulièrement à cœur à partager avec cette association où nous avons pu réaliser notre Pause Ekitable où nous proposons de la nourriture et des boissons chaudes bio et locales, ainsi que des livres de recettes réalisés par notre association.\n\nCe partenariat a permis de renforcer le lien entre nos deux associations, de proposer un moment de partage, de convivialité et de plaisir pour les éudiant·es, de contribuer à la vie de l’établissement, et, en second plan, d’élargir notre influence et notre reconnaissance auprès du public.\n\nMon rôle a alors, en tant que chargée de communication, de garantir la visibilité de l’évènement et le bon échange avec JACM pour s’accorder sur le bon déroulé de l’évènement.\n\nEn Décembre 2025 a eu lieu, au sein de l’IUT Bordeaux Montaigne, un évènement en collaboration partenariale avec différents collectifs associatifs de cet établissement : Le Village de Noël.\n\nNotre association a pris en charge l’organisation de cet évènement dans sa grande majorité, entre l’organisation administrative, la logistique, la communication interne et externe liée à l’évènement, et la préparation avec les autres associations, le tout dans une logique de dynamisme partenarial où.\n\nNotre objectif était de proposer un évènement pour l’ensemble des personnes au sein de l’établissement et qui permette à chaque partie-prenante de partager leur univers, leurs actions et leurs valeurs.",
-        "imageKeys": [],
+        "imageKeys": [
+          "lib_audiovisuel3.png"
+        ],
         "link": "",
         "pdfKey": "",
         "en": {
@@ -794,8 +834,21 @@
           "en": ""
         }
       }
+    },
+    "hero": {
+      "label": "Disciplines hero",
+      "fields": {
+        "disc": {
+          "fr": "Photographe · Vidéaste · Animatrice · Organisatrice · Militante",
+          "en": ""
+        },
+        "tagline": {
+          "fr": "Full aura en vrai",
+          "en": ""
+        }
+      }
     }
   },
   "cv": "lib_CV.pdf",
-  "visits": 80
+  "visits": 2
 }
