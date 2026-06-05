@@ -222,9 +222,10 @@ input[type=color]{padding:.2rem;height:36px;}
 .emoji-grid button:hover{background:rgba(7,113,135,.12);}
 
 /* MODALS */
-.modal-ov{display:none;position:fixed;inset:0;z-index:9998;background:rgba(42,33,24,.5);align-items:center;justify-content:center;}
+.modal-ov{display:none;position:fixed;inset:0;z-index:10050;background:rgba(42,33,24,.5);align-items:center;justify-content:center;}
 .modal-ov.show{display:flex;}
 .modal-box{background:var(--cream);border-radius:20px;width:min(680px,95vw);max-height:90vh;overflow-y:auto;padding:1.8rem;position:relative;transform:translateY(8px);opacity:0;transition:transform .26s ease,opacity .26s ease}
+.modal-box{z-index:10051}
 .modal-ov.show .modal-box{transform:translateY(0) scale(1);opacity:1}
 .dark .modal-box{background:#231e17;}
 .modal-close{position:absolute;top:1rem;right:1rem;background:none;border:1.5px solid var(--border);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.9rem;color:var(--ink);display:flex;align-items:center;justify-content:center;}
