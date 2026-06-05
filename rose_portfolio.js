@@ -207,16 +207,30 @@ async function loadImageLibrary(){
 // Try loading a site-wide JSON file placed in the repo (root or /images/).
 async function loadExternalSiteData(){
   // Try several candidate locations and include cache-busting to avoid SW/cache issues
-  const baseCandidates = ['/site-data.json','/images/site-data.json','/data/site-data.json','./site-data.json','site-data.json'];
+  // Record attempts and outcomes to window.__rp_siteDataDebug for easier debugging in the browser console.
+  window.__rp_siteDataDebug = window.__rp_siteDataDebug || {attempts:[]};
+  // Prefer relative paths first (useful when site is served from a subpath)
+  const baseCandidates = ['./site-data.json','site-data.json','./images/site-data.json','/site-data.json','/images/site-data.json','/data/site-data.json'];
   const ts = Date.now();
   const candidates = baseCandidates.map(c => c + '?_=' + ts);
   for(const p of candidates){
     try{
+      const start = Date.now();
       const res = await fetch(p,{cache:'no-cache'});
+      const duration = Date.now()-start;
+      window.__rp_siteDataDebug.attempts.push({url:p,ok:res.ok,status:res.status,duration});
+      console.debug('site-data fetch',p,res.status,res.ok,duration+'ms');
       if(!res.ok) continue;
       const j = await res.json();
-      if(j && typeof j === 'object') return j;
-    }catch(_){ continue; }
+      if(j && typeof j === 'object'){
+        window.__rp_siteDataDebug.success = {url:p,source:'candidate',dataKeys:Object.keys(j)};
+        return j;
+      }
+    }catch(err){
+      window.__rp_siteDataDebug.attempts.push({url:p,ok:false,error:err&&err.message});
+      console.debug('site-data fetch error',p,err&&err.message);
+      continue;
+    }
   }
   // If running on GitHub Pages, attempt to fetch the file directly from raw.githubusercontent
   try{
@@ -233,10 +247,28 @@ async function loadExternalSiteData(){
         rawPaths.push(`https://raw.githubusercontent.com/${user}/${repo}/${br}/data/site-data.json`);
       });
       for(const rp of rawPaths){
-        try{ const r = await fetch(rp,{cache:'no-cache'}); if(!r.ok) continue; const j = await r.json(); if(j && typeof j==='object') return j; }catch(_){ continue; }
+        try{
+          const start = Date.now();
+          const r = await fetch(rp,{cache:'no-cache'});
+          const duration = Date.now()-start;
+          window.__rp_siteDataDebug.attempts.push({url:rp,ok:r.ok,status:r.status,duration,githubRaw:true});
+          console.debug('site-data raw fetch',rp,r.status,r.ok,duration+'ms');
+          if(!r.ok) continue;
+          const j = await r.json();
+          if(j && typeof j==='object'){
+            window.__rp_siteDataDebug.success = {url:rp,source:'raw',dataKeys:Object.keys(j)};
+            return j;
+          }
+        }catch(err){
+          window.__rp_siteDataDebug.attempts.push({url:rp,ok:false,error:err&&err.message,githubRaw:true});
+          console.debug('site-data raw fetch error',rp,err&&err.message);
+          continue;
+        }
       }
     }
-  }catch(_){ }
+  }catch(err){ console.debug('site-data github raw path error',err&&err.message); }
+  // Expose final debug object so user can inspect in console: window.__rp_siteDataDebug
+  window.__rp_siteDataDebug.final = true;
   return null;
 }
 
@@ -289,11 +321,9 @@ async function initState(){
   await IDB.open();
   await loadImageLibrary();
   await API.init();
-  // Skip loading external site-data when running locally to avoid 404 noise
+  // Always attempt to load external site-data (site-data.json) so S is populated when present.
   let externalSiteData = null;
-  if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
-    externalSiteData = await loadExternalSiteData();
-  }
+  try{ externalSiteData = await loadExternalSiteData(); }catch(_){ externalSiteData = null; }
   let remoteState = null;
   if(API.enabled){
     try{remoteState = await API.getState();}catch(_){remoteState = null;}
@@ -803,6 +833,8 @@ document.getElementById('skill-popup').addEventListener('click',e=>{if(e.target=
 function renderAll(){
   applySectionOrder();
     renderHeaderLogo();renderLoaderMain();renderHero();renderAbout();renderCarouselBg();renderSkills();renderCarouselSection();renderProjects();renderTimeline();renderTestimonials();renderIUTSection();renderContact();renderCVBtn();
+  // Populate any deferred images (same approach as About avatar) for the whole document
+  try{ resolveDeferredImages(document); }catch(_){ }
   obs();startCarousels();
   document.getElementById('fy').textContent=new Date().getFullYear();
 }
