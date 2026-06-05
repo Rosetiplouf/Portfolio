@@ -101,22 +101,6 @@ const SEC_LABELS={
 };
 
 let S={}, imgCache={};
-function getImgUrl(key){
-  if(!key) return null;
-  // if value is already a URL stored in imgCache
-  if(imgCache[key]) return imgCache[key];
-  // if key looks like a URL
-  try{ const u = new URL(key); if(u.protocol.startsWith('http')) return key; }catch(_){ }
-  // try to find in imageLibrary
-  const lib = (S.imageLibrary||[]).find(it=>it.key===key);
-  if(lib && lib.url) return lib.url;
-  // try common prefixes
-  if(key.startsWith('lib_')){
-    const filename = key.replace(/^lib_/,'');
-    try{ return new URL('./images/'+filename, window.location.href).href; }catch(_){ return './images/'+filename; }
-  }
-  return null;
-}
 
 async function loadImageLibrary(){
   const candidates = ['./images/image-library.json','/images/image-library.json','images/image-library.json','./image-library.json','/image-library.json'];
@@ -138,7 +122,24 @@ async function loadImageLibrary(){
     if(!url && filename){
       try{ url = new URL('./images/'+filename, window.location.href).href; }catch(_){ url = 'images/'+filename; }
     }
-    imgCache[key] = url;
+    // If hosted on GitHub Pages, try resolving to raw.githubusercontent URLs when relative paths fail to load
+    (async ()=>{
+      try{
+        const host = (location.hostname||'');
+        if(host.endsWith('github.io') && filename && url){
+          // derive user/repo from hostname and pathname
+          const user = host.split('.')[0] || '';
+          const parts = (location.pathname||'').split('/').filter(Boolean);
+          const repo = parts[0] || '';
+          const branches = ['main','master'];
+          for(const br of branches){
+            const raw = `https://raw.githubusercontent.com/${user}/${repo}/${br}/images/${filename}`;
+            try{ const r = await fetch(raw,{method:'HEAD'}); if(r.ok){ url = raw; break; } }catch(_){ }
+          }
+        }
+      }catch(_){ }
+      imgCache[key] = url;
+    })();
     it.key = key; it.url = url;
   });
 }
@@ -149,19 +150,6 @@ async function loadExternalSiteData(){
   const baseCandidates = ['/site-data.json','/images/site-data.json','/data/site-data.json','./site-data.json','site-data.json'];
   const ts = Date.now();
   const candidates = baseCandidates.map(c => c + '?_=' + ts);
-  // If running on GitHub Pages, try raw.githubusercontent fallback using inferred user/repo
-  try{
-    if(location.hostname && location.hostname.endsWith('github.io')){
-      const user = location.hostname.split('.github.io')[0];
-      const segs = location.pathname.replace(/^\//,'').split('/').filter(Boolean);
-      const repo = segs[0] || '';
-      if(user && repo){
-        const rawBase = `https://raw.githubusercontent.com/${user}/${repo}/HEAD`;
-        candidates.push(rawBase + '/site-data.json?_=' + ts);
-        candidates.push(rawBase + '/images/site-data.json?_=' + ts);
-      }
-    }
-  }catch(_){ }
   for(const p of candidates){
     try{
       const res = await fetch(p,{cache:'no-cache'});
@@ -330,6 +318,9 @@ function toggleLang(){
 }
 function tv(obj,field){return lang==='en'&&obj?.en?.[field]?obj.en[field]:obj?.[field]||'';}
 
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatRichText(s){ if(!s) return ''; const esc = escapeHtml(s); const paras = esc.split(/\n{2,}/).map(p=>p.replace(/\n/g,'<br>')); return paras.map(p=>`<p style="color:var(--ink2);line-height:1.7;margin-bottom:.8rem">${p}</p>`).join(''); }
+
 let twI=0,twC=0,twDel=false,twT=null;
 function startTW(){if(twT)clearTimeout(twT);twI=0;twC=0;twDel=false;tick();}
 function tick(){
@@ -465,7 +456,7 @@ function renderSectionSettings(){
   const loaderMessagesTextarea=$('loader-messages');
   const header=S.header||{};
   const preview=(src,alt)=>src?`<img src="${src}" style="max-width:120px;max-height:60px;display:block;margin:0 auto">`:alt;
-  if(headerPreview) headerPreview.innerHTML = preview(getImgUrl(header.logoKey)||header.logoUrl,'Uploader un PNG');
+  if(headerPreview) headerPreview.innerHTML = preview(imgCache[header.logoKey],'Uploader un PNG');
   if(loaderMessagesTextarea) loaderMessagesTextarea.value = (header.loaderMessages||DEF.header.loaderMessages||[]).join('\n');
 }
 function saveSectionSettings(){S.header ||= {};const loaderMessagesTextarea=document.getElementById('loader-messages');if(loaderMessagesTextarea){S.header.loaderMessages=loaderMessagesTextarea.value.split('\n').map(l=>l.trim()).filter(Boolean);}LS.set('header',S.header);renderHeaderLogo();flash('Paramètres du header enregistrés ✓');}
@@ -634,13 +625,13 @@ function renderCVBtn(){const b=document.getElementById('cv-nav-btn');if(b)b.styl
 function openPDFViewer(src,title){
   let url = src;
   if(!src) { flash('Fichier non trouvé'); return; }
-    if(!src.match(/^(https?:|blob:|data:)/i)) {
-      url = getImgUrl(src) || imgCache[src];
-      if(!url) {
-        IDB.get(src).then(d=>{ if(d) openPDFViewer(d,title); else flash('PDF non trouvé'); });
-        return;
-      }
+  if(!src.match(/^(https?:|blob:|data:)/i)) {
+    url = imgCache[src];
+    if(!url) {
+      IDB.get(src).then(d=>{ if(d) openPDFViewer(d,title); else flash('PDF non trouvé'); });
+      return;
     }
+  }
   document.getElementById('pdf-title-bar').textContent=title||'';
   document.getElementById('pdf-frame').src=url;
   document.getElementById('pdf-dl-btn').href=url;
@@ -682,7 +673,7 @@ function closeShare(){document.getElementById('share-menu').classList.remove('sh
 function openTLPopup(id){
   const t=(S.timeline||[]).find(x=>x.id===id);if(!t)return;
   const col=t.type==='pro'?'var(--teal)':'var(--red)';
-  const logo=getImgUrl('tl_logo_'+t.id);
+  const logo=imgCache['tl_logo_'+t.id];
   const dates=formatTLDateLabel(t);
   const linkedP=(t.linkedProjects||[]).map(pid=>{const p=(S.projects||[]).find(x=>x.id===pid);return p?`<button class="proj-badge" onclick="closeTLPopup();setTimeout(()=>document.getElementById('sec-projects').scrollIntoView({behavior:'smooth'}),200)"><span>${p.emoji}</span>${tv(p,'title')}</button>`:'';}).join('');
   const skills=(t.linkedSkills||[]).map(id=>{const s=(S.skills||[]).find(x=>x.id===id);return s?`<span class="tl-popup-badge" style="border-color:${s.color};color:${s.color}">${s.name}</span>`:'';}).join('');
@@ -718,8 +709,8 @@ function showSkillProjects(skillId){
   currentSkillPopupId=skillId;
   const projects=(S.projects||[]).filter(p=> (p.linkedSkills||[]).includes(skillId));
   const timelines=(S.timeline||[]).filter(t=> (t.linkedSkills||[]).includes(skillId));
-  const projHtml=projects.length?projects.map(p=>{const img=getImgUrl('proj_'+p.id);return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem"><div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:${p.color};display:flex;align-items:center;justify-content:center">${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover">`:`${p.emoji||'✦'}`}</div><div style="flex:1"><div style="font-weight:700">${tv(p,'title')}</div><div style="font-size:.88rem;color:var(--ink2)">${tv(p,'desc')}</div></div><div><button class="smbtn" onclick="closeSkillPopup();setTimeout(()=>{document.getElementById('sec-projects').scrollIntoView({behavior:'smooth'});},220)">Voir</button></div></div>`;}).join(''):`<div style="color:var(--ink2);font-size:.92rem">${lang==='fr'?'Aucun projet lié à cette compétence pour l’instant.':'No projects linked to this skill yet.'}</div>`;
-  const tlHtml=timelines.length?timelines.map(t=>{const logo=getImgUrl('tl_logo_'+t.id);const dates=formatTLDateLabel(t);return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem"><div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:${t.type==='pro'?'var(--teal)':'var(--red)'};display:flex;align-items:center;justify-content:center">${logo?`<img src="${logo}" style="width:100%;height:100%;object-fit:cover">`:'✦'}</div><div style="flex:1"><div style="font-weight:700">${tv(t,'title')}</div><div style="font-size:.82rem;color:var(--ink2)">${dates}</div></div><div><button class="smbtn" onclick="closeSkillPopup();setTimeout(()=>{openTLPopup('${t.id}');},220)">Voir</button></div></div>`;}).join(''):`<div style="color:var(--ink2);font-size:.92rem">${lang==='fr'?'Aucune étape liée à cette compétence pour l’instant.':'No timeline entries linked to this skill yet.'}</div>`;
+  const projHtml=projects.length?projects.map(p=>{const img=imgCache['proj_'+p.id];return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem"><div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:${p.color};display:flex;align-items:center;justify-content:center">${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover">`:`${p.emoji||'✦'}`}</div><div style="flex:1"><div style="font-weight:700">${tv(p,'title')}</div><div style="font-size:.88rem;color:var(--ink2)">${tv(p,'desc')}</div></div><div><button class="smbtn" onclick="closeSkillPopup();setTimeout(()=>{document.getElementById('sec-projects').scrollIntoView({behavior:'smooth'});},220)">Voir</button></div></div>`;}).join(''):`<div style="color:var(--ink2);font-size:.92rem">${lang==='fr'?'Aucun projet lié à cette compétence pour l’instant.':'No projects linked to this skill yet.'}</div>`;
+  const tlHtml=timelines.length?timelines.map(t=>{const logo=imgCache['tl_logo_'+t.id];const dates=formatTLDateLabel(t);return `<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem"><div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:${t.type==='pro'?'var(--teal)':'var(--red)'};display:flex;align-items:center;justify-content:center">${logo?`<img src="${logo}" style="width:100%;height:100%;object-fit:cover">`:'✦'}</div><div style="flex:1"><div style="font-weight:700">${tv(t,'title')}</div><div style="font-size:.82rem;color:var(--ink2)">${dates}</div></div><div><button class="smbtn" onclick="closeSkillPopup();setTimeout(()=>{openTLPopup('${t.id}');},220)">Voir</button></div></div>`;}).join(''):`<div style="color:var(--ink2);font-size:.92rem">${lang==='fr'?'Aucune étape liée à cette compétence pour l’instant.':'No timeline entries linked to this skill yet.'}</div>`;
   const combined=`<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem"><div style="width:42px;height:42px;border-radius:10px;background:${s.color};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff">${s.name[0]||'S'}</div><div style="font-size:1.05rem;font-weight:700">${s.name}</div></div><div style="margin-bottom:.6rem"><strong>${lang==='fr'?'Projets liés':'Related projects'}</strong><div style="margin-top:.5rem">${projHtml}</div></div><div><strong>${lang==='fr'?'Parcours liés':'Related timeline'}</strong><div style="margin-top:.5rem">${tlHtml}</div></div>`;
   document.getElementById('skill-popup-content').innerHTML=combined;
   document.getElementById('skill-popup').classList.add('show');
@@ -743,10 +734,10 @@ function renderHeaderLogo(){
   const logoContainer=$('tb-logo');
   if(!logoContainer) return;
   const header=S.header||{};
-  let d = getImgUrl(header.logoKey) || header.logoUrl;
+  let d = imgCache[header.logoKey] || header.logoUrl;
   if(!d && header.logoKey){
     (async ()=>{ 
-      const fromIdb = await IDB.get(header.logoKey);
+      const fromIdb = await IDB.get(header.logoKey); 
       if(fromIdb){ imgCache[header.logoKey]=fromIdb; renderHeaderLogo(); }
     })();
   }
@@ -784,9 +775,9 @@ function renderAbout(){
   setText('ab-p2',tv(S.about,'p2'));
   const img=$('about-img');
   const ph=$('about-ph');
-  const d=getImgUrl('about_avatar');
-  if(d){ if(img){ img.src=d; img.style.display='block'; } if(ph) ph.style.display='none'; }
-  else { if(img) img.style.display='none'; if(ph) ph.style.display='flex'; }
+  const d=imgCache['about_avatar'];
+  if(d){if(img){img.src=d;img.style.display='block';} if(ph) ph.style.display='none';}
+  else{if(img) img.style.display='none'; if(ph) ph.style.display='flex';}
   setHTML('ab-tags',(S.about.tags||[]).map(id=>{const tag=(S.tags||[]).find(x=>x.id===id);return tag?`<span class="tag-pill">${tag.emoji} ${tag.name}</span>`:'';}).join(''));
 }
 function renderSkills(){
@@ -799,7 +790,7 @@ function renderSkills(){
 }
 
 let carA={bg:null,sec:null};
-function carImgs(){return (S.carousel.imageKeys||[]).map(k=>({data:getImgUrl(k),key:k})).filter(x=>x.data);} 
+function carImgs(){return(S.carousel.imageKeys||[]).map(k=>({data:imgCache[k],key:k})).filter(x=>x.data);}
 function renderCarouselBg(){const imgs=carImgs(),t=document.getElementById('car-track-bg');t.innerHTML=imgs.length?[...imgs,...imgs].map(x=>`<img src="${x.data}" alt="">`).join(''):'';}
 function renderCarouselSection(){
   const h=S.carousel.height||260,imgs=carImgs(),t=document.getElementById('car-track-sec');
@@ -906,7 +897,7 @@ function renderTimeline(){
   svg.innerHTML=h;
   document.getElementById('tl-cards').innerHTML=visible.map(t=>{
     const x=xOf(t),ly=t.type==='pro'?LP:LE,col=t.type==='pro'?'var(--teal)':'var(--red)';
-    const logo=getImgUrl('tl_logo_'+t.id);
+    const logo=imgCache['tl_logo_'+t.id];
     const offset=offsets[t.id]||0;
     const top=ly+offset-23;
     return`<div class="tl-card tl-node${isSkillFilter(activeF)&&((t.linkedSkills||[]).includes(activeF))?' active':''}" style="left:${x}px;top:${top}px;transform:translateX(-50%);border:2px solid ${col};" onclick="openTLPopup('${t.id}')" title="${tv(t,'title')}">${logo?`<img class="tl-card-logo" src="${logo}" alt="">`:`<div class="tl-card-logo-ph">✦</div>`}</div>`;
@@ -919,7 +910,7 @@ function renderTestimonials(){
   if(!el) return;
   if(!(S.testimonials||[]).length){el.innerHTML='<p style="color:var(--ink2);font-size:.9rem;font-style:italic">Aucune appréciation pour l\'instant.</p>';if(typeof obs==='function') setTimeout(()=>obs(),60);return;}
   const cards = S.testimonials.map((t,i)=>{
-    const av = getImgUrl('testi_'+t.id);
+    const av = imgCache['testi_'+t.id];
     // vary sizes to get a masonry/pinterest feel: large every 5th, small every 3rd
     let sizeClass = 'normal';
     if(i % 5 === 0) sizeClass = 'large';
@@ -952,7 +943,7 @@ function renderProjects(){
     return p.cat===activeF||(p.tags||[]).includes(activeF);
   }));
   document.getElementById('proj-el').innerHTML=(list||[]).map(p=>{
-    const img=getImgUrl('proj_'+p.id), icon=p.iconKey?getImgUrl(p.iconKey):null, hasPDF = p.pdfKey && getImgUrl(p.pdfKey);
+    const img=imgCache['proj_'+p.id],icon=p.iconKey?imgCache[p.iconKey]:null,hasPDF=p.pdfKey&&imgCache[p.pdfKey];
     const esc=s=>(s||'').replace(/'/g,"\\'");
     return`<div class="card proj-card ap">
       <div class="proj-thumb" style="background:${p.color}">${img?`<img class="cover" src="${img}">`:''}${(icon||!img)?`<span class="pe">${icon?`<img src="${icon}" style="width:2.5rem;height:2.5rem;object-fit:contain">`:(p.emoji||'')}</span>`:''}</div>
@@ -960,7 +951,7 @@ function renderProjects(){
       ${(p.tags||[]).length?`<div class="proj-tags">${p.tags.map(id=>tagMap[id]?`<span class="proj-tag">${tagMap[id].emoji} ${tagMap[id].name}</span>`:'').join('')}</div>`:''}
       <div class="proj-actions">
         ${p.link?`<button class="pab" onclick="window.open('${esc(p.link)}','_blank')">↗ Lien</button>`:''}
-        ${hasPDF?`<button class="pab" onclick="openPDFViewer('${getImgUrl(p.pdfKey)}','${esc(tv(p,'title'))}')">📄 PDF</button>`:''}
+        ${hasPDF?`<button class="pab" onclick="openPDFViewer(imgCache['${p.pdfKey}'],'${esc(tv(p,'title'))}')">📄 PDF</button>`:''}
         <button class="pab" onclick="shareProject('${esc(tv(p,'title'))}','${esc(p.link||'')}')">↗ Partager</button>
       </div></div></div>`;
   }).join('');
@@ -975,7 +966,7 @@ function setSkillFilter(id){
 
 function renderContact(){
   const items=(S.contact||[]).map(c=>{
-    const icon=c.iconKey?getImgUrl(c.iconKey):null;
+    const icon=c.iconKey?imgCache[c.iconKey]:null;
     const value=c.href?`<a href="${c.href}">${c.value}</a>`:`<span class="ci-value">${c.value}</span>`;
     return `<div class="ci"><div class="ci-icon">${icon?`<img src="${icon}" alt="">`:(c.emoji||'✦')}</div><div class="ci-meta"><span class="ci-lbl">${tv(c,'label')}</span>${value}</div></div>`;
   }).join('');
@@ -1015,7 +1006,7 @@ function populateAdmin(){
   const n=Object.keys(S.pendingTranslations||{}).length;
   const tb=document.getElementById('tab-transl-btn');tb.classList.toggle('pending',n>0);tb.textContent=n>0?`Traductions ⏳ (${n})`:'Traductions ⏳';
 }
-function refreshAboutPrev(){const d=getImgUrl('about_avatar');document.getElementById('about-img-prev').innerHTML=d?`<img src="${d}" style="max-height:52px;display:block;margin:0 auto">`:'Cliquer pour ajouter';document.getElementById('about-crop-btn').style.display=d?'inline-block':'none';}
+function refreshAboutPrev(){const d=imgCache['about_avatar'];document.getElementById('about-img-prev').innerHTML=d?`<img src="${d}" style="max-height:52px;display:block;margin:0 auto">`:'Cliquer pour ajouter';document.getElementById('about-crop-btn').style.display=d?'inline-block':'none';}
 
 function saveHero(){S.hero={...S.hero,name:document.getElementById('a-name').value,disc:document.getElementById('a-disc').value,tagline:document.getElementById('a-tagline').value,tw:document.getElementById('a-tw').value,cta:document.getElementById('a-cta').value};markPending('hero','disc',S.hero.disc,'Disciplines hero');markPending('hero','tagline',S.hero.tagline,'Accroche hero');LS.set('hero',S.hero);renderHero();flash('Hero enregistré ✓');}
 function renderAboutTagSel(){const sel=S.about.tags||[];document.getElementById('about-tag-sel').innerHTML='<div style="display:flex;flex-wrap:wrap;gap:.4rem">'+(S.tags||[]).map(t=>`<span onclick="toggleAboutTag('${t.id}',this)" style="cursor:pointer;padding:.2rem .75rem;border-radius:20px;font-size:.78rem;border:1.5px solid var(--border);background:${sel.includes(t.id)?'var(--teal)':'transparent'};color:${sel.includes(t.id)?'#fff':'var(--ink2)'};transition:all .2s">${t.emoji} ${t.name}</span>`).join('')+'</div>';}
@@ -1055,8 +1046,7 @@ function saveSkills(){LS.set('skills',S.skills);renderSkills();flash('Compétenc
 function renderAdminCarousel(){
   const meta=S.carousel.imageMeta||{};
   document.getElementById('a-car-list').innerHTML=(S.carousel.imageKeys||[]).map((k,i)=>{
-    const d=getImgUrl(k) || imgCache[k]; if(!d) return '';
-    const m=meta[k]||{};
+    const d=imgCache[k];if(!d)return'';const m=meta[k]||{};
     const tagOpts=(S.tags||[]).map(t=>`<span onclick="toggleCarTag('${k}','${t.id}',this)" style="cursor:pointer;padding:.15rem .6rem;border-radius:16px;font-size:.74rem;border:1.5px solid var(--border);background:${(m.tags||[]).includes(t.id)?'var(--teal)':'transparent'};color:${(m.tags||[]).includes(t.id)?'#fff':'var(--ink2)'};margin:.1rem;display:inline-block">${t.emoji} ${t.name}</span>`).join('');
     const projOpts=(S.projects||[]).map(p=>`<span onclick="toggleCarProj('${k}','${p.id}',this)" style="cursor:pointer;padding:.15rem .6rem;border-radius:16px;font-size:.74rem;border:1.5px solid var(--border);background:${(m.linkedProjects||[]).includes(p.id)?'var(--teal)':'transparent'};color:${(m.linkedProjects||[]).includes(p.id)?'#fff':'var(--ink2)'};margin:.1rem;display:inline-block">${p.emoji} ${p.title}</span>`).join('');
     return`<div class="car-adm-card" id="cadc-${i}">
@@ -1091,12 +1081,7 @@ function renderAdminImageLibrary(){
 }
 
 function useLibAsHeader(libKey){ S.header ||= {}; S.header.logoKey = libKey; LS.set('header',S.header); renderHeaderLogo(); renderSectionSettings(); flash('Logo défini depuis la bibliothèque ✓'); }
-function useLibAsAbout(libKey){ 
-  const libItem = (S.imageLibrary||[]).find(it=>it.key===libKey);
-  const d = getImgUrl(libKey) || (libItem||{}).url || imgCache[libKey];
-  if(!d){ flash('Image introuvable'); return; }
-  imgCache['about_avatar']=d; IDB.set('about_avatar',d); renderAbout(); refreshAboutPrev(); flash('Photo de profil définie ✓');
-}
+function useLibAsAbout(libKey){ const d=imgCache[libKey]; if(!d){flash('Image introuvable');return;} imgCache['about_avatar']=d; IDB.set('about_avatar',d); renderAbout(); refreshAboutPrev(); flash('Photo de profil définie ✓'); }
 function addLibToCarousel(libKey){ S.carousel ||= {}; S.carousel.imageKeys = S.carousel.imageKeys||[]; S.carousel.imageKeys.push(libKey); LS.set('carousel',S.carousel); renderAdminCarousel(); renderCarouselSection(); renderCarouselBg(); flash('Image ajoutée à la galerie ✓'); }
 
 // Library picker state and helpers
@@ -1106,8 +1091,7 @@ function openLibPicker(kind,targetType,params={},multi=false){
   const title = kind==='pdf'? 'Choisir un PDF' : 'Choisir une image';
   document.getElementById('lib-modal-title').textContent = title + (multi? ' (sélection multiple)':'');
   renderLibModal();
-  const modal = document.getElementById('lib-modal');
-  if(modal){ if(modal.parentNode !== document.body) document.body.appendChild(modal); modal.style.zIndex = 99999; modal.classList.add('show'); }
+  document.getElementById('lib-modal').classList.add('show');
   document.getElementById('lib-modal-confirm').style.display = multi? 'inline-block':'none';
 }
 function closeLibPicker(){ _libPickerState=null; document.getElementById('lib-modal').classList.remove('show'); document.getElementById('lib-modal-grid').innerHTML=''; }
@@ -1145,7 +1129,7 @@ function renderLibModal(){
 function confirmLibSelection(){ if(!_libPickerState) return; const keys = Array.from(_libPickerState.selected); keys.forEach(k=>assignLibToTarget(k,_libPickerState.targetType,_libPickerState.params)); closeLibPicker(); }
 function assignLibToTarget(libKey,targetType,params){ 
   const libItem = S.imageLibrary.find(it=>it.key===libKey);
-  const url = getImgUrl(libKey) || (libItem||{}).url || imgCache[libKey];
+  const url = imgCache[libKey] || (libItem||{}).url;
   if(!url && !libKey){ flash('Fichier introuvable'); return; }
   switch(targetType){
     case 'proj_img':{
@@ -1406,27 +1390,14 @@ function renderAdminIUT(){
   document.getElementById('iut-visible').checked=S.iutMontaigne.visible;
   const list=document.getElementById('a-iut-list');
   list.innerHTML=(S.iutMontaigne.sections||[]).map((sub,i)=>{
-    const hasPDF=sub.pdfKey&&(getImgUrl(sub.pdfKey)||imgCache[sub.pdfKey]||S.cv===sub.pdfKey);
+    const hasPDF=sub.pdfKey&&(imgCache[sub.pdfKey]||S.cv===sub.pdfKey);
     return`<div style="border:1.5px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:.8rem;margin-bottom:1rem">
         <div style="flex:1">
           <label style="display:block;margin-bottom:.3rem;font-weight:500">Titre</label>
           <input value="${sub.title}" onchange="S.iutMontaigne.sections[${i}].title=this.value" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px">
-          <label style="display:block;margin-top:.6rem;margin-bottom:.3rem;font-weight:500">Description (paragraphes)</label>
-          <div id="a-iut-pars-${i}" style="display:flex;flex-direction:column;gap:.5rem">
-            ${(sub.text||'').toString().split(/\n{2,}/).map((p,pi)=>{
-              const esc = p.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-              return `
-                <div style="display:flex;gap:.5rem;align-items:flex-start">
-                  <textarea rows="2" onchange="updateIUTParagraph(${i},${pi},this.value)" style="flex:1;padding:.4rem;border:1.5px solid var(--border);border-radius:6px">${esc}</textarea>
-                  <div style="display:flex;flex-direction:column;gap:.3rem">
-                    <button class="smbtn" onclick="addIUTParagraph(${i},${pi})">＋</button>
-                    <button class="smbtn" onclick="removeIUTParagraph(${i},${pi})">✕</button>
-                  </div>
-                </div>`;
-            }).join('')}
-          </div>
-          <div style="margin-top:.5rem"><button class="smbtn" onclick="addIUTParagraph(${i},-1)">+ Ajouter un paragraphe</button></div>
+          <label style="display:block;margin-top:.6rem;margin-bottom:.3rem;font-weight:500">Description</label>
+          <textarea rows="2" onchange="S.iutMontaigne.sections[${i}].text=this.value" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px">${sub.text||''}</textarea>
           <div style="margin-top:.6rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
             <strong style="font-size:.85rem;color:var(--ink2)">Images: ${(sub.imageKeys||[]).length}</strong>
             <strong style="font-size:.85rem;color:var(--ink2)">Lien: ${sub.link?'✓':'—'}</strong>
@@ -1458,8 +1429,7 @@ function openIUTSubsection(subsectionId){
     pdfEl.textContent='—';
   }
   renderIUTModalImages();
-  const modal = document.getElementById('iut-modal-ov');
-  if(modal){ if(modal.parentNode !== document.body) document.body.appendChild(modal); modal.style.zIndex = 99999; modal.classList.add('show'); }
+  document.getElementById('iut-modal-ov').classList.add('show');
 }
 function viewIUTSubsection(subsectionId){
   const sub=S.iutMontaigne.sections.find(s=>s.id===subsectionId);
@@ -1478,13 +1448,13 @@ function viewIUTSubsection(subsectionId){
   if(grid){
     grid.querySelectorAll('button.iut-btn').forEach(b=>b.classList.toggle('active',b.dataset.iutId===subsectionId));
   }
-  const imgs=(sub.imageKeys||[]).map(k=>{const u=getImgUrl(k)||'';return `<div style="width:160px;height:160px;overflow:hidden;border-radius:8px"><img src="${u}" style="width:100%;height:100%;object-fit:cover"></div>`}).join('');
-  const pdfLink = sub.pdfKey ? `<a href="${getImgUrl(sub.pdfKey)||'#'}" target="_blank" class="smbtn">Ouvrir PDF</a>` : '';
+  const imgs=(sub.imageKeys||[]).map(k=>`<div style="width:160px;height:160px;overflow:hidden;border-radius:8px"><img src="${imgCache[k]||''}" style="width:100%;height:100%;object-fit:cover"></div>`).join('');
+  const pdfLink = sub.pdfKey ? `<a href="${imgCache[sub.pdfKey]||'#'}" target="_blank" class="smbtn">Ouvrir PDF</a>` : '';
   const link = sub.link ? `<a href="${sub.link}" target="_blank" class="smbtn">Voir le lien</a>` : '';
   disp.innerHTML = `
     <div class="card" style="padding:1rem">
-      <h3 style="margin-top:0">${hEsc(sub.title)}</h3>
-      ${(sub.text||'').toString().split(/\n{2,}/).map(p=>`<p style="color:var(--ink2);margin:0 0 1rem;line-height:1.6">${hEsc(p).replace(/\n/g,'<br>')}</p>`).join('')}
+      <h3 style="margin-top:0">${sub.title}</h3>
+      ${formatRichText(sub.text)}
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">${link}${pdfLink}</div>
       <div style="display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap">${imgs}</div>
     </div>
@@ -1511,7 +1481,7 @@ function renderIUTModalImages(){
   if(!currentIUTSubsection)return;
   const grid=document.getElementById('iut-modal-images');
   grid.innerHTML=(currentIUTSubsection.imageKeys||[]).map((key,i)=>{
-    const d=getImgUrl(key) || imgCache[key];
+    const d=imgCache[key];
     return`<div style="position:relative;width:160px;height:160px;border-radius:6px;overflow:hidden;background:#f0f0f0">
       ${d?`<img src="${d}" style="width:100%;height:100%;object-fit:cover">`:''}
       <button class="smbtn del" style="position:absolute;top:6px;right:6px;width:28px;height:28px;padding:0;font-size:.9rem;line-height:28px" onclick="currentIUTSubsection.imageKeys.splice(${i},1);renderIUTModalImages()">✕</button>
@@ -1527,35 +1497,6 @@ function saveIUTSubsection(){
   renderAdminIUT();
   closeIUTModal();
   flash('Subsection enregistrée ✓');
-}
-
-function updateIUTParagraph(sectionIdx,paraIdx,value){
-  const sub = S.iutMontaigne.sections[sectionIdx];
-  if(!sub) return;
-  const pars = (sub.text||'').toString().split(/\n{2,}/);
-  pars[paraIdx] = value;
-  sub.text = pars.join('\n\n');
-  LS.set('iutMontaigne',S.iutMontaigne);
-  renderIUTSection();
-  // re-render admin to reflect current state
-  renderAdminIUT();
-}
-function addIUTParagraph(sectionIdx,afterIdx){
-  const sub = S.iutMontaigne.sections[sectionIdx]; if(!sub) return;
-  const pars = (sub.text||'').toString().split(/\n{2,}/).filter(Boolean);
-  const insertAt = afterIdx<0?pars.length:afterIdx+1;
-  pars.splice(insertAt,0,'');
-  sub.text = pars.join('\n\n');
-  LS.set('iutMontaigne',S.iutMontaigne);
-  renderAdminIUT();
-}
-function removeIUTParagraph(sectionIdx,paraIdx){
-  const sub = S.iutMontaigne.sections[sectionIdx]; if(!sub) return;
-  const pars = (sub.text||'').toString().split(/\n{2,}/);
-  pars.splice(paraIdx,1);
-  sub.text = pars.join('\n\n');
-  LS.set('iutMontaigne',S.iutMontaigne);
-  renderAdminIUT();
 }
 function saveIUT(){
   LS.set('iutMontaigne',S.iutMontaigne);
