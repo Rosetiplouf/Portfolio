@@ -271,6 +271,23 @@ async function initState(){
       requestAnimationFrame(()=>{renderHeaderLogo();renderLoaderMain();renderAbout();renderCarouselBg();renderCarouselSection();renderProjects();renderTimeline();renderTestimonials();renderContact();});
     }catch(e){}
   })();
+  // Try to resolve referenced image keys to URLs (best-effort) so images render on static hosts
+  (async function preResolveAssets(){
+    try{
+      const keys=new Set();
+      if(S.header?.logoKey) keys.add(S.header.logoKey);
+      if(S.carousel?.imageKeys) S.carousel.imageKeys.forEach(k=>keys.add(k));
+      if(S.projects) S.projects.forEach(p=>{ if(p.iconKey) keys.add(p.iconKey); if(p.pdfKey) keys.add(p.pdfKey); keys.add('proj_'+p.id); });
+      if(S.timeline) S.timeline.forEach(t=>keys.add('tl_logo_'+t.id));
+      if(S.testimonials) S.testimonials.forEach(t=>keys.add('testi_'+t.id));
+      if(S.contact) S.contact.forEach(c=>{ if(c.iconKey) keys.add(c.iconKey); });
+      if(S.cv) keys.add(S.cv);
+      if(S.about?.avatarKey) keys.add(S.about.avatarKey);
+      if(S.iutMontaigne?.sections) S.iutMontaigne.sections.forEach(s=>{ if(s.pdfKey) keys.add(s.pdfKey); (s.imageKeys||[]).forEach(k=>keys.add(k)); });
+      for(const k of keys){ if(!k) continue; if(imgCache[k]) continue; const url = await getImageUrl(k); if(url) imgCache[k]=url; }
+    }catch(_){ }
+  })();
+
   renderAll();
   if(S.activeFontIdx>=0)applyFontByIdx(S.activeFontIdx);
   (async ()=>{
@@ -300,6 +317,54 @@ async function initState(){
       btns.forEach(b=>b.classList.remove('active'));
     }
   });
+}
+
+// Ensure modal elements are children of body so they aren't trapped in other stacking contexts
+function ensureModalInBody(el){
+  try{
+    if(!el) return;
+    if(el.parentElement !== document.body) document.body.appendChild(el);
+    // ensure very high z-index to beat any admin overlay
+    el.style.zIndex = el.style.zIndex || 10050;
+    const box = el.querySelector('.modal-box') || el.querySelector('.adm') || el.querySelector('.pdf-modal-box') || el.querySelector('.tl-popup-box');
+    if(box) box.style.zIndex = box.style.zIndex || 10051;
+  }catch(_){ }
+}
+
+// Try to resolve a key or filename to a usable URL. Prefer imgCache, then library entries, then common /images paths, then GitHub raw.
+async function getImageUrl(ref){
+  if(!ref) return null;
+  if(typeof ref !== 'string') return null;
+  if(/^data:|^blob:|^https?:\/\//i.test(ref)) return ref;
+  if(imgCache[ref]) return imgCache[ref];
+  // check imageLibrary
+  if(Array.isArray(S.imageLibrary)){
+    const lib = S.imageLibrary.find(it=>it.key===ref || it.filename===ref || (it.url||'').endsWith('/'+ref));
+    if(lib && lib.url){ imgCache[ref]=lib.url; return lib.url; }
+  }
+  // try common extensions in /images
+  const exts=['.png','.jpg','.jpeg','.webp','.gif','.svg'];
+  for(const e of exts){
+    const cand1 = new URL('./images/'+ref+e, window.location.href).href;
+    try{const h=await fetch(cand1,{method:'HEAD'}); if(h.ok){ imgCache[ref]=cand1; return cand1; }}catch(_){ }
+    const cand2 = new URL('./images/'+ref, window.location.href).href; // maybe ref already has extension
+    try{const h2=await fetch(cand2,{method:'HEAD'}); if(h2.ok){ imgCache[ref]=cand2; return cand2; }}catch(_){ }
+  }
+  // If on github pages try raw.githubusercontent
+  try{
+    const host=(location.hostname||'');
+    if(host.endsWith('github.io')){
+      const user = host.split('.')[0] || '';
+      const parts = (location.pathname||'').split('/').filter(Boolean);
+      const repo = parts[0] || '';
+      const branches=['main','master'];
+      for(const br of branches){
+        const rp = `https://raw.githubusercontent.com/${user}/${repo}/${br}/images/${ref}`;
+        try{ const r = await fetch(rp,{method:'HEAD'}); if(r.ok){ imgCache[ref]=rp; return rp; } }catch(_){ }
+      }
+    }
+  }catch(_){ }
+  return null;
 }
 
 let dark=LS.get('dark_v8')||false;
@@ -636,7 +701,7 @@ function openPDFViewer(src,title){
   document.getElementById('pdf-frame').src=url;
   document.getElementById('pdf-dl-btn').href=url;
   document.getElementById('pdf-dl-btn').download=(title||'cv')+'.pdf';
-  document.getElementById('pdf-modal').classList.add('show');
+  const pm=document.getElementById('pdf-modal'); ensureModalInBody(pm); pm.classList.add('show');
 }
 function closePDF(){document.getElementById('pdf-modal').classList.remove('show');setTimeout(()=>document.getElementById('pdf-frame').src='',300);}
 
@@ -1091,7 +1156,9 @@ function openLibPicker(kind,targetType,params={},multi=false){
   const title = kind==='pdf'? 'Choisir un PDF' : 'Choisir une image';
   document.getElementById('lib-modal-title').textContent = title + (multi? ' (sélection multiple)':'');
   renderLibModal();
-  document.getElementById('lib-modal').classList.add('show');
+  const libModal = document.getElementById('lib-modal');
+  ensureModalInBody(libModal);
+  libModal.classList.add('show');
   document.getElementById('lib-modal-confirm').style.display = multi? 'inline-block':'none';
 }
 function closeLibPicker(){ _libPickerState=null; document.getElementById('lib-modal').classList.remove('show'); document.getElementById('lib-modal-grid').innerHTML=''; }
@@ -1429,7 +1496,7 @@ function openIUTSubsection(subsectionId){
     pdfEl.textContent='—';
   }
   renderIUTModalImages();
-  document.getElementById('iut-modal-ov').classList.add('show');
+  const im=document.getElementById('iut-modal-ov'); ensureModalInBody(im); im.classList.add('show');
 }
 function viewIUTSubsection(subsectionId){
   const sub=S.iutMontaigne.sections.find(s=>s.id===subsectionId);
