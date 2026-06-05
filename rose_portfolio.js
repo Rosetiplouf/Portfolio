@@ -149,6 +149,19 @@ async function loadExternalSiteData(){
   const baseCandidates = ['/site-data.json','/images/site-data.json','/data/site-data.json','./site-data.json','site-data.json'];
   const ts = Date.now();
   const candidates = baseCandidates.map(c => c + '?_=' + ts);
+  // If running on GitHub Pages, try raw.githubusercontent fallback using inferred user/repo
+  try{
+    if(location.hostname && location.hostname.endsWith('github.io')){
+      const user = location.hostname.split('.github.io')[0];
+      const segs = location.pathname.replace(/^\//,'').split('/').filter(Boolean);
+      const repo = segs[0] || '';
+      if(user && repo){
+        const rawBase = `https://raw.githubusercontent.com/${user}/${repo}/HEAD`;
+        candidates.push(rawBase + '/site-data.json?_=' + ts);
+        candidates.push(rawBase + '/images/site-data.json?_=' + ts);
+      }
+    }
+  }catch(_){ }
   for(const p of candidates){
     try{
       const res = await fetch(p,{cache:'no-cache'});
@@ -1393,14 +1406,27 @@ function renderAdminIUT(){
   document.getElementById('iut-visible').checked=S.iutMontaigne.visible;
   const list=document.getElementById('a-iut-list');
   list.innerHTML=(S.iutMontaigne.sections||[]).map((sub,i)=>{
-    const hasPDF=sub.pdfKey&&(imgCache[sub.pdfKey]||S.cv===sub.pdfKey);
+    const hasPDF=sub.pdfKey&&(getImgUrl(sub.pdfKey)||imgCache[sub.pdfKey]||S.cv===sub.pdfKey);
     return`<div style="border:1.5px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:.8rem;margin-bottom:1rem">
         <div style="flex:1">
           <label style="display:block;margin-bottom:.3rem;font-weight:500">Titre</label>
           <input value="${sub.title}" onchange="S.iutMontaigne.sections[${i}].title=this.value" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px">
-          <label style="display:block;margin-top:.6rem;margin-bottom:.3rem;font-weight:500">Description</label>
-          <textarea rows="2" onchange="S.iutMontaigne.sections[${i}].text=this.value" style="width:100%;padding:.4rem;border:1.5px solid var(--border);border-radius:6px">${sub.text||''}</textarea>
+          <label style="display:block;margin-top:.6rem;margin-bottom:.3rem;font-weight:500">Description (paragraphes)</label>
+          <div id="a-iut-pars-${i}" style="display:flex;flex-direction:column;gap:.5rem">
+            ${(sub.text||'').toString().split(/\n{2,}/).map((p,pi)=>{
+              const esc = p.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+              return `
+                <div style="display:flex;gap:.5rem;align-items:flex-start">
+                  <textarea rows="2" onchange="updateIUTParagraph(${i},${pi},this.value)" style="flex:1;padding:.4rem;border:1.5px solid var(--border);border-radius:6px">${esc}</textarea>
+                  <div style="display:flex;flex-direction:column;gap:.3rem">
+                    <button class="smbtn" onclick="addIUTParagraph(${i},${pi})">＋</button>
+                    <button class="smbtn" onclick="removeIUTParagraph(${i},${pi})">✕</button>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+          <div style="margin-top:.5rem"><button class="smbtn" onclick="addIUTParagraph(${i},-1)">+ Ajouter un paragraphe</button></div>
           <div style="margin-top:.6rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
             <strong style="font-size:.85rem;color:var(--ink2)">Images: ${(sub.imageKeys||[]).length}</strong>
             <strong style="font-size:.85rem;color:var(--ink2)">Lien: ${sub.link?'✓':'—'}</strong>
@@ -1432,7 +1458,8 @@ function openIUTSubsection(subsectionId){
     pdfEl.textContent='—';
   }
   renderIUTModalImages();
-  document.getElementById('iut-modal-ov').classList.add('show');
+  const modal = document.getElementById('iut-modal-ov');
+  if(modal){ if(modal.parentNode !== document.body) document.body.appendChild(modal); modal.style.zIndex = 99999; modal.classList.add('show'); }
 }
 function viewIUTSubsection(subsectionId){
   const sub=S.iutMontaigne.sections.find(s=>s.id===subsectionId);
@@ -1452,7 +1479,7 @@ function viewIUTSubsection(subsectionId){
     grid.querySelectorAll('button.iut-btn').forEach(b=>b.classList.toggle('active',b.dataset.iutId===subsectionId));
   }
   const imgs=(sub.imageKeys||[]).map(k=>{const u=getImgUrl(k)||'';return `<div style="width:160px;height:160px;overflow:hidden;border-radius:8px"><img src="${u}" style="width:100%;height:100%;object-fit:cover"></div>`}).join('');
-  const pdfLink = sub.pdfKey ? `<a href="${imgCache[sub.pdfKey]||'#'}" target="_blank" class="smbtn">Ouvrir PDF</a>` : '';
+  const pdfLink = sub.pdfKey ? `<a href="${getImgUrl(sub.pdfKey)||'#'}" target="_blank" class="smbtn">Ouvrir PDF</a>` : '';
   const link = sub.link ? `<a href="${sub.link}" target="_blank" class="smbtn">Voir le lien</a>` : '';
   disp.innerHTML = `
     <div class="card" style="padding:1rem">
@@ -1484,7 +1511,7 @@ function renderIUTModalImages(){
   if(!currentIUTSubsection)return;
   const grid=document.getElementById('iut-modal-images');
   grid.innerHTML=(currentIUTSubsection.imageKeys||[]).map((key,i)=>{
-    const d=imgCache[key];
+    const d=getImgUrl(key) || imgCache[key];
     return`<div style="position:relative;width:160px;height:160px;border-radius:6px;overflow:hidden;background:#f0f0f0">
       ${d?`<img src="${d}" style="width:100%;height:100%;object-fit:cover">`:''}
       <button class="smbtn del" style="position:absolute;top:6px;right:6px;width:28px;height:28px;padding:0;font-size:.9rem;line-height:28px" onclick="currentIUTSubsection.imageKeys.splice(${i},1);renderIUTModalImages()">✕</button>
@@ -1500,6 +1527,35 @@ function saveIUTSubsection(){
   renderAdminIUT();
   closeIUTModal();
   flash('Subsection enregistrée ✓');
+}
+
+function updateIUTParagraph(sectionIdx,paraIdx,value){
+  const sub = S.iutMontaigne.sections[sectionIdx];
+  if(!sub) return;
+  const pars = (sub.text||'').toString().split(/\n{2,}/);
+  pars[paraIdx] = value;
+  sub.text = pars.join('\n\n');
+  LS.set('iutMontaigne',S.iutMontaigne);
+  renderIUTSection();
+  // re-render admin to reflect current state
+  renderAdminIUT();
+}
+function addIUTParagraph(sectionIdx,afterIdx){
+  const sub = S.iutMontaigne.sections[sectionIdx]; if(!sub) return;
+  const pars = (sub.text||'').toString().split(/\n{2,}/).filter(Boolean);
+  const insertAt = afterIdx<0?pars.length:afterIdx+1;
+  pars.splice(insertAt,0,'');
+  sub.text = pars.join('\n\n');
+  LS.set('iutMontaigne',S.iutMontaigne);
+  renderAdminIUT();
+}
+function removeIUTParagraph(sectionIdx,paraIdx){
+  const sub = S.iutMontaigne.sections[sectionIdx]; if(!sub) return;
+  const pars = (sub.text||'').toString().split(/\n{2,}/);
+  pars.splice(paraIdx,1);
+  sub.text = pars.join('\n\n');
+  LS.set('iutMontaigne',S.iutMontaigne);
+  renderAdminIUT();
 }
 function saveIUT(){
   LS.set('iutMontaigne',S.iutMontaigne);
