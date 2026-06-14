@@ -90,6 +90,7 @@ const DEF={
   },
   sectionOrder:['sec-home','sec-about','sec-skills','sec-carousel','sec-projects','sec-timeline','sec-testimonials','sec-iut','sec-contact'],
   fonts:[],activeFontIdx:-1,pendingTranslations:{},cv:null,visits:0,
+  asscPdf:null,
 };
 
 const SEC_LABELS={
@@ -368,6 +369,23 @@ async function initState(){
       const all = await IDB.getAll();
       if(all) Object.keys(all).forEach(k=>{ if(!imgCache[k] && all[k]) imgCache[k]=all[k]; });
       requestAnimationFrame(()=>{renderHeaderLogo();renderLoaderMain();renderAbout();renderCarouselBg();renderCarouselSection();renderProjects();renderTimeline();renderTestimonials();renderContact();});
+    }catch(_){ }
+    // Try to resolve ASSC PDF key from IndexedDB or image library so the nav button stays visible
+    try{
+      if(S.asscPdf && !imgCache[S.asscPdf]){
+        const stored = await IDB.get(S.asscPdf);
+        if(stored){ imgCache[S.asscPdf]=stored; }
+        else if(Array.isArray(S.imageLibrary)){
+          const lib = S.imageLibrary.find(it=>it.key===S.asscPdf || it.filename===S.asscPdf || (it.url||'').split('/').pop()===S.asscPdf);
+          if(lib && lib.url) imgCache[S.asscPdf]=lib.url;
+        }
+        // If we were able to resolve, ensure admin preview and nav button show
+        if(imgCache[S.asscPdf]){
+          try{ IDB.set(S.asscPdf, imgCache[S.asscPdf]); }catch(_){ }
+          try{ document.getElementById('assc-preview-wrap').style.display='block'; }catch(_){}
+          try{ renderAsscBtn(); }catch(_){}
+        }
+      }
     }catch(_){ }
     try{ hideLoader(); }catch(_){ }
   })();
@@ -712,6 +730,33 @@ function renderStats(){
 function resetVisits(){S.visits=0;LS.set('visits',0);renderStats();}
 function deleteCV(){S.cv=null;LS.set('cv',null);document.getElementById('cv-preview-wrap').style.display='none';renderCVBtn();flash('CV supprimé');}
 function renderCVBtn(){const b=document.getElementById('cv-nav-btn');if(b)b.style.display=S.cv?'inline-block':'none';}
+function deleteASSC(){ S.asscPdf = null; LS.set('asscPdf',null); const el=document.getElementById('assc-preview-wrap'); if(el) el.style.display='none'; renderAsscBtn(); flash('Dossier ASSC supprimé'); }
+function renderAsscBtn(){const b=document.getElementById('assc-nav-btn'); if(b) b.style.display = S.asscPdf ? 'inline-block' : 'none'; }
+// PDF.js viewer state
+let __pdfDoc = null, __pdfPageNum = 1, __pdfScale = 1.2, __pdfRendering = false;
+
+function renderPdfPage(pageNum){
+  if(!__pdfDoc) return;
+  const canvas = document.getElementById('pdf-canvas');
+  const ctx = canvas.getContext('2d');
+  __pdfRendering = true;
+  __pdfDoc.getPage(pageNum).then(page=>{
+    const viewport = page.getViewport({scale: __pdfScale});
+    // set canvas size to page size (in px)
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    // render
+    const renderTask = page.render({canvasContext: ctx, viewport});
+    renderTask.promise.then(()=>{
+      __pdfRendering = false;
+      setText('pdf-title-bar', (document.getElementById('pdf-title-bar')?.textContent||''));
+      // page indicator (reuse pdf-dl-btn area to show page count if present)
+      const ind = document.getElementById('pdf-page-indicator');
+      if(ind) ind.textContent = `${__pdfPageNum} / ${__pdfDoc.numPages}`;
+    }).catch(e=>{ __pdfRendering=false; console.error('render error',e); flash('Erreur de rendu PDF'); });
+  }).catch(e=>{ console.error('getPage error',e); flash('Impossible de lire la page PDF'); });
+}
+
 function openPDFViewer(src,title){
   let url = src;
   if(!src) { flash('Fichier non trouvé'); return; }
@@ -722,13 +767,45 @@ function openPDFViewer(src,title){
       return;
     }
   }
-  document.getElementById('pdf-title-bar').textContent=title||'';
-  document.getElementById('pdf-frame').src=url;
-  document.getElementById('pdf-dl-btn').href=url;
-  document.getElementById('pdf-dl-btn').download=(title||'cv')+'.pdf';
+  document.getElementById('pdf-title-bar').textContent = title||'';
+  document.getElementById('pdf-dl-btn').href = url;
+  document.getElementById('pdf-dl-btn').download = (title||'doc')+'.pdf';
+  // show modal
   document.getElementById('pdf-modal').classList.add('show');
+
+  // if PDF.js available, load via it
+  if(window.pdfjsLib && typeof window.pdfjsLib.getDocument === 'function'){
+    try{
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+      const loadingTask = pdfjsLib.getDocument(url);
+      loadingTask.promise.then(pdf=>{
+        __pdfDoc = pdf;
+        __pdfPageNum = 1;
+        __pdfScale = 1.2;
+        // create or update page indicator
+        if(!document.getElementById('pdf-page-indicator')){
+          const span = document.createElement('span'); span.id='pdf-page-indicator'; span.style.marginLeft='8px'; document.querySelector('.pdf-toolbar').appendChild(span);
+        }
+        renderPdfPage(__pdfPageNum);
+      }).catch(err=>{ console.error('PDF load error',err); flash('Erreur chargement PDF'); });
+    }catch(e){ console.error(e); flash('PDF.js non disponible'); }
+  }else{
+    // fallback: open in new tab
+    window.open(url, '_blank');
+  }
 }
-function closePDF(){document.getElementById('pdf-modal').classList.remove('show');setTimeout(()=>document.getElementById('pdf-frame').src='',300);}
+
+function closePDF(){
+  document.getElementById('pdf-modal').classList.remove('show');
+  // clear PDF.js state and canvas
+  try{ __pdfDoc = null; __pdfPageNum = 1; __pdfScale = 1.2; const canvas = document.getElementById('pdf-canvas'); if(canvas){ const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }}catch(_){ }
+}
+
+function pdfNext(){ if(!__pdfDoc || __pdfRendering) return; if(__pdfPageNum < __pdfDoc.numPages){ __pdfPageNum++; renderPdfPage(__pdfPageNum); } }
+function pdfPrev(){ if(!__pdfDoc || __pdfRendering) return; if(__pdfPageNum>1){ __pdfPageNum--; renderPdfPage(__pdfPageNum); } }
+function pdfZoomIn(){ if(!__pdfDoc) return; __pdfScale = Math.min(4, (__pdfScale||1) + 0.25); renderPdfPage(__pdfPageNum); }
+function pdfZoomOut(){ if(!__pdfDoc) return; __pdfScale = Math.max(0.4, (__pdfScale||1) - 0.25); renderPdfPage(__pdfPageNum); }
+function pdfFit(){ if(!__pdfDoc) return; const wrap = document.getElementById('pdf-canvas-wrap'); __pdfDoc.getPage(__pdfPageNum).then(page=>{ const vp = page.getViewport({scale:1}); const targetW = Math.max(200, (wrap.clientWidth||800) - 40); __pdfScale = targetW / vp.width; renderPdfPage(__pdfPageNum); }); }
 
 function openLB(src,title,desc,link,key){
   document.getElementById('lb-img').src=src;
@@ -832,11 +909,12 @@ document.getElementById('skill-popup').addEventListener('click',e=>{if(e.target=
 
 function renderAll(){
   applySectionOrder();
-    renderHeaderLogo();renderLoaderMain();renderHero();renderAbout();renderCarouselBg();renderSkills();renderCarouselSection();renderProjects();renderTimeline();renderTestimonials();renderIUTSection();renderContact();renderCVBtn();
+    renderHeaderLogo();renderLoaderMain();renderHero();renderAbout();renderCarouselBg();renderSkills();renderCarouselSection();renderProjects();renderTimeline();renderTestimonials();renderContact();renderCVBtn();renderAsscBtn();
   // Populate any deferred images (same approach as About avatar) for the whole document
   try{ resolveDeferredImages(document); }catch(_){ }
   obs();startCarousels();
   document.getElementById('fy').textContent=new Date().getFullYear();
+  try{ const ap = document.getElementById('assc-preview-wrap'); if(ap) ap.style.display = S.asscPdf ? 'block' : 'none'; }catch(_){ }
 }
 
 function patchHero(){document.getElementById('h-desc').innerHTML=tv(S.hero,'disc')+'<br><span style="color:var(--ink2);font-style:italic">'+tv(S.hero,'tagline')+'</span>';document.getElementById('h-cta').textContent=tv(S.hero,'cta');}
@@ -1118,10 +1196,11 @@ function populateAdmin(){
   document.getElementById('car-speed').value=S.carousel.speed||60;document.getElementById('car-height').value=S.carousel.height||260;
   refreshAboutPrev();
   if(S.cv){ document.getElementById('cv-preview-wrap').style.display='block'; }
+  if(S.asscPdf){ document.getElementById('assc-preview-wrap').style.display='block'; }
   renderStats();renderSectionOrderAdmin();renderSectionSettings();
   renderTagsLib();renderAboutTagSel();
   renderAdminSkills();renderAdminCarousel();renderAdminProjects();
-  renderAdminTimeline();renderAdminTestimonials();renderAdminIUT();renderAdminContact();
+  renderAdminTimeline();renderAdminTestimonials();renderAdminContact();
   renderPendingTranslations();
   buildEP('new-tag-emoji-ep','new-tag-emoji',null);
   const n=Object.keys(S.pendingTranslations||{}).length;
@@ -1275,6 +1354,8 @@ function assignLibToTarget(libKey,targetType,params){
       S.carousel ||= {}; S.carousel.imageKeys = S.carousel.imageKeys||[]; S.carousel.imageKeys.push(libKey); imgCache[libKey] = url; IDB.set(libKey,url); LS.set('carousel',S.carousel); renderAdminCarousel(); renderCarouselSection(); renderCarouselBg(); flash('Image(s) ajoutée(s) à la galerie ✓'); break; }
     case 'cv':{
       S.cv = libKey; imgCache[libKey] = url; IDB.set(libKey,url); LS.set('cv',S.cv); document.getElementById('cv-preview-wrap').style.display='block'; renderCVBtn(); flash('CV sélectionné ✓'); break; }
+    case 'assc_pdf':{
+      S.asscPdf = libKey; imgCache[libKey] = url; IDB.set(libKey,url); LS.set('asscPdf',S.asscPdf); document.getElementById('assc-preview-wrap').style.display='block'; renderAsscBtn(); flash('Dossier ASSC sélectionné ✓'); break; }
     case 'iut_img':{
       if(!currentIUTSubsection) { flash('Aucune subsection sélectionnée'); return; }
       currentIUTSubsection.imageKeys ||= [];
