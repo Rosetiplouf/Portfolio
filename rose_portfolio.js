@@ -202,6 +202,17 @@ async function loadImageLibrary(){
       }catch(_){ }
     })();
     it.key = key; it.url = url;
+    // create a convenient alias without trailing digits so references like `cinegem` work
+    try{
+      const fn = (it.filename||'').split('.').slice(0,-1).join('.') || '';
+      if(fn){
+        const alias = fn.replace(/[^a-zA-Z0-9_\-\.]/g,'_').replace(/[_\-\.]*\d+$/,'').toLowerCase();
+        if(alias && !imgCache[alias]){
+          imgCache[alias] = url;
+          // do not persist alias to IDB automatically to avoid duplicates, but make it resolvable at runtime
+        }
+      }
+    }catch(_){ }
   });
 }
 
@@ -1173,7 +1184,7 @@ function renderContact(){
 }
 function obs(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.ap:not(.vis)').forEach(el=>io.observe(el));}
 
-const PASS='rosyanger';let adminTime=null;const SESSION=5*60*1e3;
+const PASS='0000';let adminTime=null;const SESSION=5*60*1e3;
 function openAdmin(){if(adminTime&&(Date.now()-adminTime)<SESSION){showAdmin();return;}document.getElementById('pwd').value='';document.getElementById('pwd-err').textContent='';document.getElementById('login-ov').classList.add('show');setTimeout(()=>document.getElementById('pwd').focus(),80);}
 function tryLogin(){if(document.getElementById('pwd').value===PASS){document.getElementById('login-ov').classList.remove('show');adminTime=Date.now();showAdmin();}else document.getElementById('pwd-err').textContent='Mot de passe incorrect';}
 function showAdmin(){
