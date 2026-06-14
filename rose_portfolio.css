@@ -236,11 +236,14 @@ input[type=color]{padding:.2rem;height:36px;}
 .lb-desc{font-size:.9rem;color:var(--ink2);line-height:1.7;margin-bottom:.8rem;}
 .lb-link{display:inline-block;color:var(--teal);font-size:.88rem;text-decoration:none;border:1.5px solid var(--teal);padding:.3rem .9rem;border-radius:20px;}
 .lb-link:hover{background:var(--teal);color:#fff;}
-.pdf-modal-box{background:var(--cream);border-radius:20px;width:min(900px,96vw);height:90vh;display:flex;flex-direction:column;padding:1rem;position:relative;}
+.pdf-modal-box{background:var(--cream);border-radius:14px;width:min(1200px,98vw);height:96vh;display:flex;flex-direction:column;padding:.6rem;position:relative;}
 .dark .pdf-modal-box{background:#231e17;}
 .pdf-toolbar{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap;}
 .pdf-toolbar span{font-size:.88rem;font-weight:600;flex:1;}
 .pdf-frame{flex:1;border:none;border-radius:10px;background:#f0f0f0;}
+.pdf-viewer{flex:1;display:flex;flex-direction:column;}
+.pdf-canvas-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:.6rem;}
+#pdf-canvas{max-width:100%;height:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);border-radius:10px;background:#fff;}
 .pdf-dl-btn{background:var(--teal);color:#fff;border:none;border-radius:20px;padding:.35rem .9rem;font-size:.8rem;cursor:pointer;font-family:var(--font);}
 
 /* SHARE */
