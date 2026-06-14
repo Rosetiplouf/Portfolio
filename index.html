@@ -95,7 +95,7 @@
     <button class="atab" onclick="showTab('projects',this)">Projets</button>
     <button class="atab" onclick="showTab('timeline',this)">Parcours</button>
     <button class="atab" onclick="showTab('testimonials',this)">Appréciations</button>
-    <button class="atab" onclick="showTab('iut',this)">IUT Montaigne</button>
+    <!-- IUT removed per user request -->
     <button class="atab" onclick="showTab('contact',this)">Contact</button>
     <button class="atab" onclick="showTab('cv',this)">CV</button>
     <button class="atab" id="tab-transl-btn" onclick="showTab('translations',this)">Traductions ⏳</button>
@@ -186,14 +186,7 @@
     <button class="smbtn" onclick="addTesti()">+ Ajouter une appréciation</button>
     <button class="savebtn" onclick="saveTestimonials()">Enregistrer</button>
   </div>
-  <div class="apanel" id="tab-iut">
-    <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
-      <input type="checkbox" id="iut-visible" onchange="S.iutMontaigne.visible=this.checked;LS.set('iutMontaigne',S.iutMontaigne);renderIUTSection();renderAdminIUT()">
-      <strong>Afficher la section IUT Bordeaux Montaigne</strong>
-    </label>
-    <div id="a-iut-list" style="margin-top:1rem"></div>
-    <button class="savebtn" onclick="saveIUT()">Enregistrer</button>
-  </div>
+  <!-- IUT admin panel removed -->
 
   <div class="apanel" id="tab-contact">
     <div id="a-ct-list"></div>
@@ -203,8 +196,16 @@
 
   <div class="apanel" id="tab-cv">
     <p style="font-size:.84rem;color:var(--ink2);margin-bottom:.8rem;line-height:1.7">Votre CV apparaît comme bouton dans la barre de navigation.</p>
-    <div class="dz" style="text-align:center;padding:1rem"><button class="smbtn" onclick="openLibPicker('pdf','cv')">Choisir un PDF depuis la bibliothèque</button></div>
+    <div class="dz" style="text-align:center;padding:1rem">
+      <button class="smbtn" onclick="openLibPicker('pdf','cv')">Choisir un PDF depuis la bibliothèque</button>
+    </div>
     <div id="cv-preview-wrap" style="margin-top:.8rem;display:none;text-align:center"><button class="smbtn del" onclick="deleteCV()">Supprimer le CV</button></div>
+    <hr style="margin:1rem 0">
+    <h4 style="margin:.4rem 0">ASSC (dossier PDF)</h4>
+    <div class="dz" style="text-align:center;padding:1rem">
+      <button class="smbtn" onclick="openLibPicker('pdf','assc_pdf')">Choisir un PDF ASSC depuis la bibliothèque</button>
+    </div>
+    <div id="assc-preview-wrap" style="margin-top:.8rem;display:none;text-align:center"><button class="smbtn del" onclick="deleteASSC()">Supprimer le dossier ASSC</button></div>
   </div>
 
   <div class="apanel" id="tab-translations">
@@ -240,11 +241,20 @@
 <div class="modal-ov" id="pdf-modal">
   <div class="pdf-modal-box">
     <div class="pdf-toolbar">
+      <button class="smbtn" onclick="pdfPrev()">←</button>
+      <button class="smbtn" onclick="pdfNext()">→</button>
+      <button class="smbtn" onclick="pdfZoomOut()">-</button>
+      <button class="smbtn" onclick="pdfZoomIn()">+</button>
+      <button class="smbtn" onclick="pdfFit()">Fit</button>
       <span id="pdf-title-bar"></span>
       <a class="pdf-dl-btn" id="pdf-dl-btn" href="#" download>⬇ Télécharger</a>
       <button class="smbtn" onclick="closePDF()">✕ Fermer</button>
     </div>
-    <iframe class="pdf-frame" id="pdf-frame" src=""></iframe>
+    <div class="pdf-viewer">
+      <div class="pdf-canvas-wrap" id="pdf-canvas-wrap">
+        <canvas id="pdf-canvas"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -282,6 +292,7 @@
     <nav class="tb-nav" id="tb-nav"></nav>
     <div class="tb-actions">
       <button class="tbtn cv" id="cv-nav-btn" style="display:none" onclick="openPDFViewer(S.cv,'CV — Rosie')">📄 CV</button>
+      <button class="tbtn assc" id="assc-nav-btn" style="display:none" onclick="openPDFViewer(S.asscPdf,'ASSC — Dossier')">ASSC</button>
       <button class="tbtn" id="theme-btn" onclick="toggleTheme()">🌙</button>
       <button class="tbtn" id="lang-btn" onclick="toggleLang()">EN</button>
       <button class="tbtn admin" onclick="openAdmin()">⚙ Admin</button>
@@ -331,11 +342,7 @@
     <h2 class="sec-title ap">Appréciations</h2>
     <div class="testimonials-grid ap" id="testi-el"></div>
   </div>
-  <div id="sec-iut" class="sec-slot wrap sec-gap" style="display:none">
-    <h2 class="sec-title ap">IUT ASSC</h2>
-    <div id="iut-subsections" style="display:flex;flex-wrap:wrap;gap:1.2rem;margin-top:1.2rem;overflow-x:visible;padding-bottom:.4rem"></div>
-    <div id="iut-display" style="margin-top:1.2rem;max-width:980px;margin-left:auto;margin-right:auto"></div>
-  </div>
+  <!-- IUT section removed -->
   <div id="sec-contact" class="sec-slot wrap sec-gap">
     <h2 class="sec-title ap">Contact</h2>
     <div class="card contact-card ap" id="ct-el"></div>
@@ -343,38 +350,8 @@
 </div>
 <footer>© <span id="fy"></span> Rose Pagotto — Fait avec ♥</footer>
 
-<!-- IUT modal moved outside admin so it can open from public UI -->
-<div class="modal-ov" id="iut-modal-ov" onclick="if(event.target===this)closeIUTModal()">
-  <div class="adm" style="max-width:900px;max-height:85vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.4rem">
-      <h3 id="iut-modal-title" style="font-size:1.1rem;color:var(--ink1)"></h3>
-      <button class="smbtn" onclick="closeIUTModal()">✕</button>
-    </div>
-    <div id="iut-modal-preview" style="margin-bottom:1rem"></div>
-    <div style="margin-bottom:1.5rem">
-      <label style="display:block;margin-bottom:.5rem;font-weight:500">Texte de description</label>
-      <textarea id="iut-modal-text" rows="4" style="width:100%;padding:.6rem;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:.9rem;resize:vertical"></textarea>
-    </div>
-    <div style="margin-bottom:1.5rem">
-      <label style="display:block;margin-bottom:.5rem;font-weight:500">Lien optionnel</label>
-      <input id="iut-modal-link" type="text" placeholder="https://..." style="width:100%;padding:.6rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
-    </div>
-    <div style="margin-bottom:1.5rem">
-      <label style="display:block;margin-bottom:.5rem;font-weight:500">PDF</label>
-      <button class="smbtn" onclick="openLibPicker('pdf','iut_pdf')">Choisir PDF depuis la bibliothèque</button>
-      <div id="iut-modal-pdf-status" style="margin-top:.5rem;font-size:.85rem;color:var(--ink2)">—</div>
-    </div>
-    <div style="margin-bottom:1.5rem">
-      <label style="display:block;margin-bottom:.5rem;font-weight:500">Images</label>
-      <button class="smbtn" onclick="openLibPicker('image','iut_img')">+ Ajouter image</button>
-      <div id="iut-modal-images" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.8rem;margin-top:.8rem"></div>
-    </div>
-    <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:2rem">
-      <button class="smbtn" onclick="closeIUTModal()">Fermer</button>
-      <button class="savebtn" onclick="saveIUTSubsection()">Enregistrer</button>
-    </div>
-  </div>
-</div>
+<!-- IUT modal removed -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="rose_portfolio.js" defer></script>
 
 </body>
