@@ -33,10 +33,13 @@
 	{"filename":"rosie.png","label":"Rosie"},
 	{"filename":"rumeur.png","label":"Rumeur"},
 	{"filename":"sheets.png","label":"Sheets"},
-	{"filename":"Test.pdf","label":"Test PDF"},
+	{"filename":"ASSC.pdf","label":"ASSC","key":"ASSC"},
 	{"filename":"theo.png","label":"Théo"},
-	{"filename":"ubm.png","label":"UBM"}
-,
+	{"filename":"ubm.png","label":"UBM"},
+	{"filename":"cinegem.png","label":"Cinegem 1","key":"cinegem1"},
+	{"filename":"cinegem2.png","label":"Cinegem 2","key":"cinegem2"},
+	{"filename":"habitatjeune.png","label":"Habitat Jeune","key":"habitatjeune"},
+	{"filename":"maisonforte1.png","label":"Maison Forte 1","key":"maisonforte1"},
 	{"filename":"gestedetrop.png","label":"Geste de Trop","key":"proj_p1779271772503"},
 	{"filename":"icare.png","label":"Icare","key":"proj_p1780611600922"},
 	{"filename":"cinehpad.png","label":"Cin'EHPAD","key":"proj_p1780611925750"},
@@ -44,8 +47,7 @@
 	{"filename":"LGUHC.png","label":"Statistiques LG UHC","key":"proj_p1780612618656"},
 	{"filename":"milo.png","label":"Milo","key":"testi_tsti1779270308189"},
 	{"filename":"theo.png","label":"Théo (testi)","key":"testi_tsti1779270312908"},
-	{"filename":"librairie.png","label":"Librairie","key":"tl_logo_tl1779222662771"}
-,
+	{"filename":"librairie.png","label":"Librairie","key":"tl_logo_tl1779222662771"},
 	{"filename":"bazas.png","label":"Bazas","key":"tl_logo_tl1779222793251"},
 	{"filename":"cemea.png","label":"Cemea","key":"tl_logo_tl1779222823946"},
 	{"filename":"ubm.png","label":"UBM","key":"tl_logo_tl1779222881107"},
@@ -56,7 +58,6 @@
 	{"filename":"EKITA.png","label":"Ekita","key":"tl_logo_tl1779223325185"},
 	{"filename":"girofard.png","label":"Girofard","key":"tl_logo_tl1779223405764"},
 	{"filename":"centerparcs.png","label":"Center Parcs","key":"tl_logo_tl1779223518603"},
-	{"filename":"pride30.png","label":"Pride 30","key":"tl_logo_tl1780609785714"}
-	,
+	{"filename":"pride30.png","label":"Pride 30","key":"tl_logo_tl1780609785714"},
 	{"filename":"rosie.png","label":"Rosie","key":"about_avatar"}
 ]
