@@ -144,7 +144,7 @@
       "car_1779313397962_0gbs6fty2r9d",
       "lib_audiovisuel2.png",
       "lib_plage.png",
-      "cinegem2",
+      "lib_cinegem2.png",
       "lib_louise.png",
       "lib_noel4.png",
       "lib_frip3.png",
@@ -200,7 +200,7 @@
         "title": "Pause Ekitable x Friperie JACM",
         "desc": "Pause Ekitable, moment de partage et de convivialité autour d'une boisson chaude et de produits locaux, en collaboration avec JACM qui organisait une friperie solidaire pour les étudiant·es de l'IUT Bordeaux Montaigne."
       },
-      "cinegem2": {
+      "lib_cinegem2.png": {
         "linkedProjects": [
           "p1781432357820"
         ],
