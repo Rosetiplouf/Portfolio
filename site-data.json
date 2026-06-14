@@ -14,13 +14,13 @@
   },
   "hero": {
     "name": "Rose Pagotto",
-    "disc": "Photographe · Vidéaste · Animatrice · Organisatrice · Militante",
-    "tagline": "Full aura en vrai",
+    "disc": " Animatrice · Vidéaste · Photographe · Militante",
+    "tagline": "Plus tu échoues, plus tu apprends.",
     "tw": "Animatrice Socioculturelle,Vidéaste,Organisatrice,Militante, Monteuse,Photographe,Passionnée d'Excel",
     "cta": "Découvrir mon travail",
     "en": {
-      "disc": "Photographer · Videographer · Animator · Organizer · Activist",
-      "tagline": "Full aura honestly",
+      "disc": "Social Worker · Videographer · Photographer · Activist",
+      "tagline": "The more you fail, the more you learn.",
       "cta": "Explore my work"
     }
   },
@@ -34,11 +34,12 @@
       "t5",
       "t6",
       "t4",
-      "t7"
+      "t7",
+      "t1"
     ],
     "en": {
-      "p1": "I am Rose, a multidisciplinary creator and socio-cultural facilitator from Bordeaux.",
-      "p2": "Driven by a strong commitment to community and activism, I always demonstrate creative autonomy."
+      "p1": "I'm Rose, a multidisciplinary creator and socio-cultural facilitator from Bordeaux. Curious, energetic, creative, and caring, I aspire to share my passions (audiovisual, video games, visual arts, science) and values ​​through the many projects I undertake, fostering participation and empowerment among my audience.",
+      "p2": "Driven by a strong commitment to associations and activism, I am a second-year student in BUT Social & Sociocultural Animation in the ACTA stream and am part of the Ekita association promoting the Social & Solidarity Economy and fair trade."
     },
     "avatarKey": "lib_rosie.png",
     "avatarUrl": "http://localhost:8000/images/rosie.png"
@@ -87,10 +88,28 @@
   ],
   "skills": [
     {
-      "id": "sk1",
-      "name": "Photographie",
-      "pct": 50,
-      "color": "#a11bbb"
+      "id": "sk1781436148824",
+      "name": "Médiation et RDR auprès des publics",
+      "pct": 85,
+      "color": "#f7a87e"
+    },
+    {
+      "id": "sk1781436123742",
+      "name": "Intervention adaptée aux enjeux de la société",
+      "pct": 85,
+      "color": "#36b556"
+    },
+    {
+      "id": "sk1781436067628",
+      "name": "Conception de démarches éducatives et des techniques d’animation",
+      "pct": 80,
+      "color": "#e6c700"
+    },
+    {
+      "id": "sk1781436101370",
+      "name": "Exploitation de données et recherches documentaires à des fins d’analyse",
+      "pct": 75,
+      "color": "#fb4b4b"
     },
     {
       "id": "sk2",
@@ -99,22 +118,16 @@
       "color": "#1994e1"
     },
     {
-      "id": "sk4",
-      "name": "Animation Socioculturelle",
-      "pct": 84,
-      "color": "#f99810"
-    },
-    {
-      "id": "sk5",
-      "name": "Organisation",
-      "pct": 80,
-      "color": "#666666"
-    },
-    {
       "id": "sk6",
       "name": "Gestion Comptable / Excel",
       "pct": 75,
       "color": "#49bd47"
+    },
+    {
+      "id": "sk1",
+      "name": "Photographie",
+      "pct": 50,
+      "color": "#a11bbb"
     }
   ],
   "carousel": {
@@ -131,10 +144,13 @@
       "car_1779313397962_0gbs6fty2r9d",
       "lib_audiovisuel2.png",
       "lib_plage.png",
+      "cinegem2",
       "lib_louise.png",
       "lib_noel4.png",
+      "lib_frip3.png",
+      "habitatjeune",
       "lib_zoe.png",
-      "lib_frip3.png"
+      "maisonforte1"
     ],
     "imageMeta": {
       "lib_audiovisuel2.png": {
@@ -183,30 +199,84 @@
         ],
         "title": "Pause Ekitable x Friperie JACM",
         "desc": "Pause Ekitable, moment de partage et de convivialité autour d'une boisson chaude et de produits locaux, en collaboration avec JACM qui organisait une friperie solidaire pour les étudiant·es de l'IUT Bordeaux Montaigne."
+      },
+      "cinegem2": {
+        "linkedProjects": [
+          "p1781432357820"
+        ],
+        "tags": [
+          "t4",
+          "t2"
+        ],
+        "title": "Diffusion du projet vidéo réalisé avec les membres du GEM Le Trèfle de Talence",
+        "link": "https://www.youtube.com/watch?v=SZPYWvaqHow"
       }
     }
   },
   "projects": [
     {
-      "id": "p1779271772503",
+      "id": "p1780612618656",
+      "cat": "Excel",
+      "emoji": "✨",
+      "iconKey": "",
+      "color": "#d1f5d2",
+      "title": "Statistiques LG UHC",
+      "desc": "Document statistique interactif réalisé dans le cadre d'un usage personnel retraçant des statistiques autour d'un hobby vidéoludique.\nEntre classements, listes, données calculées automatiquement et mise à jour visuelle, ce document est entièrement automatisé et fait main.",
+      "location": "",
+      "link": "https://docs.google.com/spreadsheets/d/1P7td96RPhWO9j2KiP1tthePPLFpTsWSMYetUKfKa9sA/edit?usp=sharing",
+      "pdfKey": "",
+      "tags": [
+        "t9",
+        "t1779222945996",
+        "t1779222963864"
+      ],
+      "linkedSkills": [
+        "sk6"
+      ],
+      "en": {
+        "title": "LG UHC Statistics",
+        "desc": ""
+      }
+    },
+    {
+      "id": "p1780612394232",
       "cat": "Audiovisuel",
       "emoji": "✨",
       "iconKey": "",
-      "color": "#ff94bf",
-      "title": "Le Geste de Trop",
-      "desc": "Court métrage réalisé dans le cadre de la deuxième édition du Festival des Révélations Sociales organisé par Nayra Vacaflor.\n\nNotre court métrage a été nominé dans les catégories \"Meilleur montage\", \"Meilleur scénario\" et \"Meilleur ...\"",
+      "color": "#d6d6d6",
+      "title": "La Rumeur",
+      "desc": "Court métrage réalisé dans le cadre de notre formation avec pour objectif de véhiculer un message de sensibilisation, sur une base libre autour de la rumeur dans les milieux sociaux.",
       "location": "IUT Bordeaux Montaigne",
-      "link": "https://youtu.be/7pNsMSCfHt8",
+      "link": "https://youtu.be/dKJhPz0RE_E",
       "pdfKey": "",
       "tags": [
         "t2",
         "t4"
       ],
-      "linkedSkills": [
-        "sk2"
-      ],
+      "linkedSkills": [],
       "en": {
-        "title": "",
+        "title": "La Rumeur",
+        "desc": ""
+      }
+    },
+    {
+      "id": "p1780611925750",
+      "cat": "Audiovisuel",
+      "emoji": "✨",
+      "iconKey": "",
+      "color": "#fbb6b6",
+      "title": "Cin'EHPAD",
+      "desc": "Projet vidéo sous le principe du suédé en partenariat avec l'EHPAD Léon Dubedat de Biscarosse dans le cadre de notre temps fort de pratique culturelle en BUT1 ASSC, avec visionnage par l'ensemble de la promotion.",
+      "location": "EHPAD Léon Dubedat (Biscarosse)",
+      "link": "https://youtu.be/7qVO6t2JKiQ",
+      "pdfKey": "",
+      "tags": [
+        "t2",
+        "t4"
+      ],
+      "linkedSkills": [],
+      "en": {
+        "title": "Cin'EHPAD",
         "desc": ""
       }
     },
@@ -230,73 +300,54 @@
         "sk4"
       ],
       "en": {
-        "title": "",
+        "title": "L'envol d'Icare",
         "desc": ""
       }
     },
     {
-      "id": "p1780611925750",
+      "id": "p1779271772503",
       "cat": "Audiovisuel",
       "emoji": "✨",
       "iconKey": "",
-      "color": "#fbb6b6",
-      "title": "Cin'EHPAD",
-      "desc": "Projet vidéo sous le principe du suédé en partenariat avec l'EHPAD Léon Dubedat de Biscarosse dans le cadre de notre temps fort de pratique culturelle en BUT1 ASSC, avec visionnage par l'ensemble de la promotion.",
-      "location": "EHPAD Léon Dubedat (Biscarosse)",
-      "link": "https://youtu.be/7qVO6t2JKiQ",
-      "pdfKey": "",
-      "tags": [
-        "t2",
-        "t4"
-      ],
-      "linkedSkills": [],
-      "en": {
-        "title": "",
-        "desc": ""
-      }
-    },
-    {
-      "id": "p1780612394232",
-      "cat": "Audiovisuel",
-      "emoji": "✨",
-      "iconKey": "",
-      "color": "#d6d6d6",
-      "title": "La Rumeur",
-      "desc": "Court métrage réalisé dans le cadre de notre formation avec pour objectif de véhiculer un message de sensibilisation, sur une base libre autour de la rumeur dans les milieux sociaux.",
+      "color": "#ff94bf",
+      "title": "Le Geste de Trop",
+      "desc": "Court métrage réalisé dans le cadre de la deuxième édition du Festival des Révélations Sociales organisé par Nayra Vacaflor.\n\nNotre court métrage a été nominé dans les catégories \"Meilleur montage\", \"Meilleur scénario\" et \"Meilleur ...\"",
       "location": "IUT Bordeaux Montaigne",
-      "link": "https://youtu.be/dKJhPz0RE_E",
+      "link": "https://youtu.be/7pNsMSCfHt8",
       "pdfKey": "",
       "tags": [
         "t2",
         "t4"
-      ],
-      "linkedSkills": [],
-      "en": {
-        "title": "",
-        "desc": ""
-      }
-    },
-    {
-      "id": "p1780612618656",
-      "cat": "Excel",
-      "emoji": "✨",
-      "iconKey": "",
-      "color": "#d1f5d2",
-      "title": "Statistiques LG UHC",
-      "desc": "Document statistique interactif réalisé dans le cadre d'un usage personnel retraçant des statistiques autour d'un hobby vidéoludique.\nEntre classements, listes, données calculées automatiquement et mise à jour visuelle, ce document est entièrement automatisé et fait main.",
-      "location": "",
-      "link": "https://docs.google.com/spreadsheets/d/1P7td96RPhWO9j2KiP1tthePPLFpTsWSMYetUKfKa9sA/edit?usp=sharing",
-      "pdfKey": "",
-      "tags": [
-        "t9",
-        "t1779222945996",
-        "t1779222963864"
       ],
       "linkedSkills": [
-        "sk6"
+        "sk2"
       ],
       "en": {
-        "title": "",
+        "title": "Le Geste de Trop",
+        "desc": ""
+      }
+    },
+    {
+      "id": "p1781432357820",
+      "cat": "Audiovisuel",
+      "emoji": "✨",
+      "iconKey": "",
+      "color": "#86e491",
+      "title": "Absolute Cinegem",
+      "desc": "Projet vidéo  dans la continuité du projet \"Cin'EHPAD\" réalisé un an plus tôt sous le principe du suédé en partenariat avec l'association GEM Le Trèfle à Talence dans le cadre de notre temps fort de pratique culturelle en BUT2 ASSC, avec visionnage par l'ensemble de la promotion.",
+      "location": "Association GEM Le Trèfle (Talence)",
+      "link": "https://www.youtube.com/watch?v=SZPYWvaqHow",
+      "pdfKey": "",
+      "tags": [
+        "t2",
+        "t4"
+      ],
+      "linkedSkills": [
+        "sk2",
+        "sk4"
+      ],
+      "en": {
+        "title": "Absolute Cinegem",
         "desc": ""
       }
     }
@@ -591,7 +642,7 @@
         "sk4"
       ],
       "en": {
-        "title": "",
+        "title": "Volunteer Mediation and Security (Bordeaux Pride & Afterpride)",
         "desc": ""
       }
     }
@@ -604,7 +655,7 @@
       "quote": "Je pense que l'animation lui convient, elle a l'esprit de la création.",
       "initials": "",
       "en": {
-        "quote": ""
+        "quote": "I think animation suits her, she has a creative spirit."
       }
     },
     {
@@ -614,7 +665,7 @@
       "quote": "Nous pouvons souligner sa posture, son sérieux, et son intérêt.",
       "initials": "",
       "en": {
-        "quote": ""
+        "quote": "We can highlight her posture, her seriousness, and her interest."
       }
     }
   ],
@@ -635,7 +686,7 @@
       "emoji": "📍",
       "iconKey": "",
       "label": "Localisation",
-      "value": "Bordeaux, France",
+      "value": "Pessac, France",
       "href": "",
       "en": {
         "label": "Location"
@@ -643,13 +694,13 @@
     },
     {
       "id": "c3",
-      "emoji": "📸",
+      "emoji": "✧",
       "iconKey": "",
-      "label": "Instagram",
-      "value": "@rosetiplouf",
-      "href": "https://instagram.com/rosetiplouf",
+      "label": "Linkedin",
+      "value": "Rose Pagotto",
+      "href": "https://www.linkedin.com/in/rose-pagotto-34133b2b7/?isSelfProfile=true",
       "en": {
-        "label": "Instagram"
+        "label": "Linkedin"
       }
     }
   ],
@@ -734,96 +785,6 @@
   "fonts": [],
   "activeFontIdx": -1,
   "pendingTranslations": {
-    "testi_tsti1779270308189": {
-      "label": "Appréciation: ",
-      "fields": {
-        "quote": {
-          "fr": "Je pense que l'animation lui convient, elle a l'esprit de la création.",
-          "en": ""
-        }
-      }
-    },
-    "testi_tsti1779270312908": {
-      "label": "Appréciation: ",
-      "fields": {
-        "quote": {
-          "fr": "Nous pouvons souligner sa posture, son sérieux, et son intérêt.",
-          "en": ""
-        }
-      }
-    },
-    "testi_tsti1779270316499": {
-      "label": "Appréciation: ",
-      "fields": {
-        "quote": {
-          "fr": "ergergerfzefeztg",
-          "en": ""
-        }
-      }
-    },
-    "testi_tsti1779270321158": {
-      "label": "Appréciation: ",
-      "fields": {
-        "quote": {
-          "fr": "uyiyuiu",
-          "en": ""
-        }
-      }
-    },
-    "tl_tl1780609785714": {
-      "label": "Parcours: Bénévole Marche & Festival des Fiertés",
-      "fields": {
-        "title": {
-          "fr": "Bénévole Médiation et Sécurité (Pride & Afterpride de Bordeaux)",
-          "en": ""
-        }
-      }
-    },
-    "project_p1779271772503": {
-      "label": "Projet: Le Geste de Trop",
-      "fields": {
-        "title": {
-          "fr": "Le Geste de Trop",
-          "en": ""
-        }
-      }
-    },
-    "project_p1780611600922": {
-      "label": "Projet: L'envol d'Icare",
-      "fields": {
-        "title": {
-          "fr": "L'envol d'Icare",
-          "en": ""
-        }
-      }
-    },
-    "project_p1780611925750": {
-      "label": "Projet: Cin'EHPAD",
-      "fields": {
-        "title": {
-          "fr": "Cin'EHPAD",
-          "en": ""
-        }
-      }
-    },
-    "project_p1780612394232": {
-      "label": "Projet: La Rumeur",
-      "fields": {
-        "title": {
-          "fr": "La Rumeur",
-          "en": ""
-        }
-      }
-    },
-    "project_p1780612618656": {
-      "label": "Projet: Statistiques LG UHC",
-      "fields": {
-        "title": {
-          "fr": "Statistiques LG UHC",
-          "en": ""
-        }
-      }
-    },
     "about": {
       "label": "À propos §1",
       "fields": {
@@ -836,21 +797,9 @@
           "en": ""
         }
       }
-    },
-    "hero": {
-      "label": "Disciplines hero",
-      "fields": {
-        "disc": {
-          "fr": "Photographe · Vidéaste · Animatrice · Organisatrice · Militante",
-          "en": ""
-        },
-        "tagline": {
-          "fr": "Full aura en vrai",
-          "en": ""
-        }
-      }
     }
   },
   "cv": "lib_CV.pdf",
-  "visits": 7
+  "visits": 4,
+  "asscPdf": "ASSC"
 }
